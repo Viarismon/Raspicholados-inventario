@@ -1,0 +1,18 @@
+# Compilados
+bin/
+*.class
+
+# Driver JDBC (se descarga aparte, no se versiona)
+lib/*.jar
+
+# Archivos de IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
