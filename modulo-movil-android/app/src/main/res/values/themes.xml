@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Módulo: Inventario (versión móvil)
+  Propósito: Tema visual base de la aplicación (Material Components).
+  Autora: Viviana Arias Montilla
+-->
+<resources>
+    <style name="Theme.RaspicholadosInventario" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/colorPrimario</item>
+        <item name="colorPrimaryDark">@color/colorPrimario</item>
+        <item name="colorAccent">@color/colorAcento</item>
+        <item name="android:windowBackground">@color/colorFondo</item>
+    </style>
+</resources>

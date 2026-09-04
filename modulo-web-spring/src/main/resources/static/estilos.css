@@ -1,0 +1,103 @@
+/* Módulo: Inventario (capa web)
+   Propósito: Estilos básicos para las vistas JSP del módulo.
+   Autora: Viviana Arias Montilla
+   Fecha de creación: 2026-08-28 */
+
+* {
+    box-sizing: border-box;
+    font-family: "Segoe UI", Arial, sans-serif;
+}
+
+body {
+    margin: 0;
+    background-color: #F7F5F0;
+    color: #1B2A41;
+}
+
+header {
+    background-color: #1B2A41;
+    color: #F3EFE7;
+    padding: 18px 32px;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.6rem;
+}
+
+header p {
+    margin: 4px 0 0;
+    color: #B08D57;
+}
+
+main {
+    max-width: 900px;
+    margin: 24px auto;
+    padding: 0 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #FFFFFF;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+th, td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid #E0DCD1;
+}
+
+th {
+    background-color: #1B2A41;
+    color: #F3EFE7;
+}
+
+tr.fila-alerta {
+    background-color: #FBEAEA;
+}
+
+.barra-acciones {
+    margin-bottom: 16px;
+}
+
+.boton {
+    display: inline-block;
+    background-color: #1B2A41;
+    color: #F3EFE7;
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+}
+
+.boton-secundario {
+    background-color: #B08D57;
+}
+
+form label {
+    display: block;
+    margin-top: 12px;
+    font-weight: bold;
+}
+
+form input {
+    width: 100%;
+    padding: 8px;
+    margin-top: 4px;
+    border: 1px solid #C9C2B2;
+    border-radius: 4px;
+}
+
+.acciones-formulario {
+    margin-top: 20px;
+    display: flex;
+    gap: 12px;
+}
+
+.pie-tabla {
+    color: #555555;
+    font-size: 0.9rem;
+}

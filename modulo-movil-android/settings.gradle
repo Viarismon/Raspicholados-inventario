@@ -1,0 +1,22 @@
+// Módulo: Inventario (versión móvil)
+// Propósito: Declara los módulos incluidos en el proyecto y los
+//            repositorios usados para resolver dependencias.
+// Autora: Viviana Arias Montilla
+
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "RaspicholadosInventarioMovil"
+include ':app'

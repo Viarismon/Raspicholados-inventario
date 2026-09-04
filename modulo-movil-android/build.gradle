@@ -1,0 +1,7 @@
+// Módulo: Inventario (versión móvil)
+// Propósito: Configuración de compilación a nivel de proyecto.
+// Autora: Viviana Arias Montilla
+
+plugins {
+    id 'com.android.application' version '8.2.2' apply false
+}

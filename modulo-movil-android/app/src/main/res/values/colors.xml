@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Módulo: Inventario (versión móvil)
+  Propósito: Paleta de colores de la app, coherente con la identidad
+             visual ya usada en los informes y en el módulo web
+             (azul marino, dorado, crema).
+  Autora: Viviana Arias Montilla
+-->
+<resources>
+    <color name="colorPrimario">#1B2A41</color>
+    <color name="colorAcento">#B08D57</color>
+    <color name="colorFondo">#F7F5F0</color>
+    <color name="colorTextoClaro">#F3EFE7</color>
+    <color name="colorTextoOscuro">#333333</color>
+    <color name="colorError">#B00020</color>
+</resources>

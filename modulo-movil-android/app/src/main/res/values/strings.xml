@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Módulo: Inventario (versión móvil)
+  Propósito: Centraliza todos los textos visibles de la app, siguiendo
+             las buenas prácticas de Android (nunca escribir texto
+             literal directamente en los layouts).
+  Autora: Viviana Arias Montilla
+-->
+<resources>
+    <string name="app_name">RASPICHOLADOS Inventario</string>
+    <string name="titulo_app">RASPICHOLADOS</string>
+    <string name="subtitulo_inventario">Módulo de inventario (móvil)</string>
+
+    <string name="boton_nuevo_producto">+ Nuevo producto</string>
+    <string name="estado_stock_bajo">Stock bajo</string>
+    <string name="estado_stock_normal">Stock normal</string>
+
+    <string name="titulo_nuevo_producto">Registrar nuevo producto</string>
+    <string name="titulo_editar_producto">Editar producto</string>
+
+    <string name="etiqueta_nombre">Nombre del producto</string>
+    <string name="etiqueta_categoria">Categoría</string>
+    <string name="etiqueta_unidad_medida">Unidad de medida</string>
+    <string name="etiqueta_stock_actual">Stock actual</string>
+    <string name="etiqueta_stock_minimo">Stock mínimo</string>
+
+    <string name="boton_guardar">Guardar</string>
+    <string name="boton_eliminar">Eliminar</string>
+    <string name="boton_cancelar">Cancelar</string>
+
+    <string name="titulo_confirmar_eliminacion">Eliminar producto</string>
+    <string name="mensaje_confirmar_eliminacion">¿Seguro que deseas eliminar este producto del inventario?</string>
+
+    <string name="mensaje_campos_obligatorios">Todos los campos son obligatorios</string>
+    <string name="mensaje_guardado_exitoso">Producto guardado correctamente</string>
+    <string name="mensaje_error_guardar">No fue posible guardar el producto</string>
+    <string name="mensaje_eliminado_exitoso">Producto eliminado correctamente</string>
+</resources>
