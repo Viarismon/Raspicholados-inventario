@@ -1,0 +1,15 @@
+# Archivos compilados
+bin/
+*.class
+
+# Archivo de persistencia generado en tiempo de ejecución
+usuarios.txt
+
+# Logs
+*.log
+
+# Archivos del sistema operativo / IDE
+.DS_Store
+.idea/
+*.iml
+.vscode/
