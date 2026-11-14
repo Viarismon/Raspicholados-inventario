@@ -1,0 +1,17 @@
+# Compilados
+bin/
+*.class
+fuentes.txt
+
+# Driver JDBC (se descarga aparte)
+lib/*.jar
+
+# Configuración local con contraseñas (se versiona config.ejemplo.properties)
+config.local.properties
+
+# IDE y sistema operativo
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
