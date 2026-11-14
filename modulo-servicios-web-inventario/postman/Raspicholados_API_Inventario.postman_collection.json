@@ -1,0 +1,3056 @@
+{
+  "info": {
+    "_postman_id": "12cdbd96-fa08-47a7-89dc-cc5d8ab3c045",
+    "name": "Raspicholados - API Inventario (AA5-EV03)",
+    "description": "Pruebas funcionales de los 28 servicios web de la API de inventario de Raspicholados.\n\nEjecutar en orden con Run collection y el entorno 'Raspicholados Inventario Local'. Requiere la API corriendo en http://localhost:8080.\n\nAutora: Viviana Arias Montilla - SENA ADSO.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00 Sistema",
+      "item": [
+        {
+          "name": "01 · Estado del servicio (salud) (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/salud",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "salud"
+              ]
+            },
+            "description": "Verifica que la API está en línea. Genera el sufijo único de esta corrida.\n\nResultado esperado: HTTP 200."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Sufijo único por corrida: permite repetir la colección sin choques de nombres en MySQL",
+                  "pm.collectionVariables.set('sufijo', String(Date.now()).slice(-9));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('datos.estado = OK', () => pm.expect(g(json, 'datos.estado')).to.eql(\"OK\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 · Índice de rutas (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": []
+            },
+            "description": "Lista todas las rutas registradas.\n\nResultado esperado: HTTP 200."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('datos tiene al menos 25 elementos', () => pm.expect(g(json, 'datos').length).to.be.at.least(25));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 · Especificación OpenAPI (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/docs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "docs"
+              ]
+            },
+            "description": "Devuelve docs/openapi.json\n\nResultado esperado: HTTP 200."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('openapi = 3.0.3', () => pm.expect(g(json, 'openapi')).to.eql(\"3.0.3\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04 · Ruta inexistente responde 404 JSON (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/loginXYZ",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "loginXYZ"
+              ]
+            },
+            "description": "Regresión H-05 y H-08: rutas parecidas ya no se atienden y el 404 es JSON.\n\nResultado esperado: HTTP 404."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 404', () => pm.response.to.have.status(404));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.codigo = RUTA_NO_ENCONTRADA', () => pm.expect(g(json, 'error.codigo')).to.eql(\"RUTA_NO_ENCONTRADA\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05 · Método no permitido responde 405 con Allow (405)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/salud",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "salud"
+              ]
+            },
+            "description": "Regresión H-07.\n\nResultado esperado: HTTP 405."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 405', () => pm.response.to.have.status(405));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.codigo = METODO_NO_PERMITIDO', () => pm.expect(g(json, 'error.codigo')).to.eql(\"METODO_NO_PERMITIDO\"));",
+                  "pm.test('Cabecera Allow', () => pm.expect(pm.response.headers.get('Allow')).to.eql(\"GET, OPTIONS\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01 Autenticación y usuarios",
+      "item": [
+        {
+          "name": "06 · Login administrador (200)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 200.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario\": \"admin\",\n  \"contrasena\": \"Raspi2026*\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('datos.tipo = Bearer', () => pm.expect(g(json, 'datos.tipo')).to.eql(\"Bearer\"));",
+                  "pm.test('datos.usuario.rol = ADMINISTRADOR', () => pm.expect(g(json, 'datos.usuario.rol')).to.eql(\"ADMINISTRADOR\"));",
+                  "if (g(json, 'datos.token') !== undefined) pm.collectionVariables.set('token_admin', g(json, 'datos.token'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07 · Login con JSON malformado (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Regresión H-06: se distingue del error de validación.\n\nResultado esperado: HTTP 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"usuario\": \"admin\", \"contrasena\": }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.codigo = JSON_MALFORMADO', () => pm.expect(g(json, 'error.codigo')).to.eql(\"JSON_MALFORMADO\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08 · Login sin datos (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.codigo = VALIDACION_FALLIDA', () => pm.expect(g(json, 'error.codigo')).to.eql(\"VALIDACION_FALLIDA\"));",
+                  "pm.test('error.detalles tiene al menos 2 elementos', () => pm.expect(g(json, 'error.detalles').length).to.be.at.least(2));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "09 · Login con contraseña incorrecta (401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 401.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario\": \"admin\",\n  \"contrasena\": \"Incorrecta1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 401', () => pm.response.to.have.status(401));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.codigo = CREDENCIALES_INVALIDAS', () => pm.expect(g(json, 'error.codigo')).to.eql(\"CREDENCIALES_INVALIDAS\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10 · Login con comilla escapada en la clave (401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Regresión H-01: la clave ya no se corta en la comilla.\n\nResultado esperado: HTTP 401.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario\": \"admin\",\n  \"contrasena\": \"Raspi2026*\\\"x\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 401', () => pm.response.to.have.status(401));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.codigo = CREDENCIALES_INVALIDAS', () => pm.expect(g(json, 'error.codigo')).to.eql(\"CREDENCIALES_INVALIDAS\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11 · Registrar empleado (admin) (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/usuarios",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 201.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreUsuario\": \"empleado{{sufijo}}\",\n  \"nombreCompleto\": \"Laura Gómez\",\n  \"contrasena\": \"Empleado2026\",\n  \"rol\": \"EMPLEADO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('datos.rol = EMPLEADO', () => pm.expect(g(json, 'datos.rol')).to.eql(\"EMPLEADO\"));",
+                  "pm.test('No expone datos.hashContrasena', () => pm.expect(g(json, 'datos.hashContrasena')).to.be.undefined);",
+                  "if (g(json, 'datos.id') !== undefined) pm.collectionVariables.set('id_usuario', g(json, 'datos.id'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12 · Registrar con contraseña débil (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/usuarios",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "description": "Regresión H-04.\n\nResultado esperado: HTTP 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreUsuario\": \"debil{{sufijo}}\",\n  \"nombreCompleto\": \"Prueba Débil\",\n  \"contrasena\": \"abc\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.codigo = VALIDACION_FALLIDA', () => pm.expect(g(json, 'error.codigo')).to.eql(\"VALIDACION_FALLIDA\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13 · Registrar usuario duplicado (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/usuarios",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 409.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreUsuario\": \"empleado{{sufijo}}\",\n  \"nombreCompleto\": \"Laura Gómez\",\n  \"contrasena\": \"Empleado2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.codigo = USUARIO_DUPLICADO', () => pm.expect(g(json, 'error.codigo')).to.eql(\"USUARIO_DUPLICADO\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14 · Login empleado (200)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 200.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario\": \"empleado{{sufijo}}\",\n  \"contrasena\": \"Empleado2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('datos.usuario.rol = EMPLEADO', () => pm.expect(g(json, 'datos.usuario.rol')).to.eql(\"EMPLEADO\"));",
+                  "if (g(json, 'datos.token') !== undefined) pm.collectionVariables.set('token_empleado', g(json, 'datos.token'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15 · Perfil del usuario autenticado (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_empleado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/perfil",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "perfil"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 200."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('datos.rol = EMPLEADO', () => pm.expect(g(json, 'datos.rol')).to.eql(\"EMPLEADO\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16 · Consultar sin token (401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/productos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "productos"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 401."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 401', () => pm.response.to.have.status(401));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.codigo = TOKEN_REQUERIDO', () => pm.expect(g(json, 'error.codigo')).to.eql(\"TOKEN_REQUERIDO\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "17 · Consultar con token alterado (401)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer abc.def.ghi"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/productos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "productos"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 401."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 401', () => pm.response.to.have.status(401));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.codigo = TOKEN_INVALIDO', () => pm.expect(g(json, 'error.codigo')).to.eql(\"TOKEN_INVALIDO\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "18 · Empleado intenta crear categoría (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_empleado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/categorias",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "categorias"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 403.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"No permitida\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 403', () => pm.response.to.have.status(403));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.codigo = PERMISO_DENEGADO', () => pm.expect(g(json, 'error.codigo')).to.eql(\"PERMISO_DENEGADO\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "19 · Content-Type incorrecto (415)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 415.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"usuario\":\"admin\",\"contrasena\":\"Raspi2026*\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 415', () => pm.response.to.have.status(415));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.codigo = TIPO_CONTENIDO_NO_SOPORTADO', () => pm.expect(g(json, 'error.codigo')).to.eql(\"TIPO_CONTENIDO_NO_SOPORTADO\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "20 · Bloqueo tras 5 intentos fallidos (429)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Regresión H-03. El pre-request envía 4 intentos fallidos; este es el 5.º.\n\nResultado esperado: HTTP 429.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario\": \"bloqueo{{sufijo}}\",\n  \"contrasena\": \"Fallida123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Envía 4 intentos fallidos; la petición principal es el 5.º y debe responder 429",
+                  "const cuerpo = JSON.stringify({ usuario: 'bloqueo' + pm.collectionVariables.get('sufijo'), contrasena: 'Fallida123' });",
+                  "let n = 0;",
+                  "function intento() {",
+                  "  if (n >= 4) return;",
+                  "  n++;",
+                  "  pm.sendRequest({ url: pm.variables.get('base_url') + '/auth/login', method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' }, body: { mode: 'raw', raw: cuerpo } }, () => intento());",
+                  "}",
+                  "intento();"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 429', () => pm.response.to.have.status(429));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.codigo = CUENTA_BLOQUEADA', () => pm.expect(g(json, 'error.codigo')).to.eql(\"CUENTA_BLOQUEADA\"));",
+                  "pm.test('Incluye cabecera Retry-After', () => pm.expect(pm.response.headers.get('Retry-After')).to.exist);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "21 · Listar usuarios (admin) (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/usuarios",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 200."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('datos tiene al menos 2 elementos', () => pm.expect(g(json, 'datos').length).to.be.at.least(2));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 Categorías",
+      "item": [
+        {
+          "name": "22 · Listar categorías (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_empleado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/categorias",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "categorias"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 200."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('datos tiene al menos 5 elementos', () => pm.expect(g(json, 'datos').length).to.be.at.least(5));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "23 · Crear categoría (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/categorias",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "categorias"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 201.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Granizados {{sufijo}}\",\n  \"descripcion\": \"Granizados de fruta natural\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('Incluye cabecera Location', () => pm.expect(pm.response.headers.get('Location')).to.exist);",
+                  "if (g(json, 'datos.id') !== undefined) pm.collectionVariables.set('id_categoria', g(json, 'datos.id'));",
+                  "if (g(json, 'datos.nombre') !== undefined) pm.collectionVariables.set('nombre_categoria', g(json, 'datos.nombre'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "24 · Crear categoría duplicada (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/categorias",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "categorias"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 409.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"granizados {{sufijo}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.codigo = CATEGORIA_DUPLICADA', () => pm.expect(g(json, 'error.codigo')).to.eql(\"CATEGORIA_DUPLICADA\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "25 · Crear categoría sin nombre (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/categorias",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "categorias"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"  \"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.codigo = VALIDACION_FALLIDA', () => pm.expect(g(json, 'error.codigo')).to.eql(\"VALIDACION_FALLIDA\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "26 · Consultar categoría por id (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_empleado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/categorias/{{id_categoria}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "categorias",
+                "{{id_categoria}}"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 200."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "27 · Actualizar categoría (200)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/categorias/{{id_categoria}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "categorias",
+                "{{id_categoria}}"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 200.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Granizados Premium {{sufijo}}\",\n  \"descripcion\": \"Línea premium\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (g(json, 'datos.nombre') !== undefined) pm.collectionVariables.set('nombre_categoria', g(json, 'datos.nombre'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "28 · Id no numérico (400)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_empleado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/categorias/abc",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "categorias",
+                "abc"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 400."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.codigo = PARAMETRO_INVALIDO', () => pm.expect(g(json, 'error.codigo')).to.eql(\"PARAMETRO_INVALIDO\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "29 · Categoría inexistente (404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_empleado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/categorias/999999",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "categorias",
+                "999999"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 404."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 404', () => pm.response.to.have.status(404));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.codigo = RECURSO_NO_ENCONTRADO', () => pm.expect(g(json, 'error.codigo')).to.eql(\"RECURSO_NO_ENCONTRADO\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "30 · Eliminar categoría con productos (409)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/categorias/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "categorias",
+                "1"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 409."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.codigo = CATEGORIA_CON_PRODUCTOS', () => pm.expect(g(json, 'error.codigo')).to.eql(\"CATEGORIA_CON_PRODUCTOS\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 Proveedores",
+      "item": [
+        {
+          "name": "31 · Listar proveedores (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_empleado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/proveedores",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "proveedores"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 200."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('datos tiene al menos 4 elementos', () => pm.expect(g(json, 'datos').length).to.be.at.least(4));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "32 · Crear proveedor (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/proveedores",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "proveedores"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 201.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nit\": \"{{sufijo}}-7\",\n  \"nombre\": \"Pulpas del Pacífico\",\n  \"telefono\": \"3001234567\",\n  \"correo\": \"ventas@pulpaspacifico.co\",\n  \"direccion\": \"Cl 10 # 4-20, Buenaventura\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "if (g(json, 'datos.id') !== undefined) pm.collectionVariables.set('id_proveedor', g(json, 'datos.id'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "33 · Crear proveedor con datos inválidos (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/proveedores",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "proveedores"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nit\": \"ABC\",\n  \"nombre\": \"Xy\",\n  \"correo\": \"no-es-correo\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.detalles tiene al menos 3 elementos', () => pm.expect(g(json, 'error.detalles').length).to.be.at.least(3));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "34 · Crear proveedor con NIT repetido (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/proveedores",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "proveedores"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 409.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nit\": \"{{sufijo}}-7\",\n  \"nombre\": \"Otro proveedor\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.codigo = PROVEEDOR_DUPLICADO', () => pm.expect(g(json, 'error.codigo')).to.eql(\"PROVEEDOR_DUPLICADO\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "35 · Consultar proveedor (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_empleado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/proveedores/{{id_proveedor}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "proveedores",
+                "{{id_proveedor}}"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 200."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('datos.nombre = Pulpas del Pacífico', () => pm.expect(g(json, 'datos.nombre')).to.eql(\"Pulpas del Pacífico\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "36 · Actualizar proveedor (200)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/proveedores/{{id_proveedor}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "proveedores",
+                "{{id_proveedor}}"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 200.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nit\": \"{{sufijo}}-7\",\n  \"nombre\": \"Pulpas del Pacífico S.A.S.\",\n  \"telefono\": \"3001234567\",\n  \"correo\": \"ventas@pulpaspacifico.co\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('datos.nombre = Pulpas del Pacífico S.A.S.', () => pm.expect(g(json, 'datos.nombre')).to.eql(\"Pulpas del Pacífico S.A.S.\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 Productos",
+      "item": [
+        {
+          "name": "37 · Listar productos (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_empleado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/productos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "productos"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 200."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('datos tiene al menos 9 elementos', () => pm.expect(g(json, 'datos').length).to.be.at.least(9));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "38 · Filtrar por categoría (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_empleado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/productos?categoria=Helados",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "productos"
+              ],
+              "query": [
+                {
+                  "key": "categoria",
+                  "value": "Helados"
+                }
+              ]
+            },
+            "description": "Resultado esperado: HTTP 200."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('Todos con categoria = Helados', () => g(json, 'datos').forEach(x => pm.expect(x['categoria']).to.eql(\"Helados\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "39 · Filtrar productos con stock bajo (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_empleado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/productos?stockBajo=true",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "productos"
+              ],
+              "query": [
+                {
+                  "key": "stockBajo",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "Resultado esperado: HTTP 200."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('Todos con estadoStock en BAJO/AGOTADO', () => g(json, 'datos').forEach(x => pm.expect([\"BAJO\", \"AGOTADO\"]).to.include(x['estadoStock'])));",
+                  "pm.test('datos tiene al menos 2 elementos', () => pm.expect(g(json, 'datos').length).to.be.at.least(2));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "40 · Buscar por texto (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_empleado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/productos?buscar=helado",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "productos"
+              ],
+              "query": [
+                {
+                  "key": "buscar",
+                  "value": "helado"
+                }
+              ]
+            },
+            "description": "Resultado esperado: HTTP 200."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('datos tiene al menos 2 elementos', () => pm.expect(g(json, 'datos').length).to.be.at.least(2));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "41 · Crear producto con stock inicial (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/productos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "productos"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 201.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Pulpa de maracuyá {{sufijo}}\",\n  \"categoria\": \"{{nombre_categoria}}\",\n  \"unidadMedida\": \"Kilogramo\",\n  \"stockMinimo\": 8,\n  \"precioUnitario\": 12500.5,\n  \"proveedorId\": {{id_proveedor}},\n  \"stockInicial\": 25\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('datos.stockActual = 25', () => pm.expect(g(json, 'datos.stockActual')).to.eql(25));",
+                  "pm.test('datos.estadoStock = NORMAL', () => pm.expect(g(json, 'datos.estadoStock')).to.eql(\"NORMAL\"));",
+                  "if (g(json, 'datos.id') !== undefined) pm.collectionVariables.set('id_producto', g(json, 'datos.id'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "42 · Crear producto con varios errores (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/productos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "productos"
+              ]
+            },
+            "description": "El validador acumula todos los errores en una sola respuesta.\n\nResultado esperado: HTTP 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Producto malo\",\n  \"categoria\": \"Inexistente\",\n  \"unidadMedida\": \"Unidad\",\n  \"stockMinimo\": 2.5,\n  \"precioUnitario\": -5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.detalles tiene al menos 3 elementos', () => pm.expect(g(json, 'error.detalles').length).to.be.at.least(3));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "43 · Crear producto duplicado (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/productos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "productos"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 409.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"pulpa de MARACUYÁ {{sufijo}}\",\n  \"categoria\": \"Insumos\",\n  \"unidadMedida\": \"Kilogramo\",\n  \"stockMinimo\": 1,\n  \"precioUnitario\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.codigo = PRODUCTO_DUPLICADO', () => pm.expect(g(json, 'error.codigo')).to.eql(\"PRODUCTO_DUPLICADO\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "44 · Consultar producto por id (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_empleado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/productos/{{id_producto}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "productos",
+                "{{id_producto}}"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 200."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('datos.proveedorNombre = Pulpas del Pacífico S.A.S.', () => pm.expect(g(json, 'datos.proveedorNombre')).to.eql(\"Pulpas del Pacífico S.A.S.\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "45 · Intentar editar el stock directamente (400)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/productos/{{id_producto}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "productos",
+                "{{id_producto}}"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Pulpa de maracuyá {{sufijo}}\",\n  \"categoria\": \"{{nombre_categoria}}\",\n  \"unidadMedida\": \"Kilogramo\",\n  \"stockMinimo\": 8,\n  \"precioUnitario\": 12500,\n  \"stockActual\": 999\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.codigo = VALIDACION_FALLIDA', () => pm.expect(g(json, 'error.codigo')).to.eql(\"VALIDACION_FALLIDA\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "46 · Actualizar producto (200)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/productos/{{id_producto}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "productos",
+                "{{id_producto}}"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 200.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Pulpa de maracuyá {{sufijo}}\",\n  \"categoria\": \"{{nombre_categoria}}\",\n  \"unidadMedida\": \"Kilogramo\",\n  \"stockMinimo\": 8,\n  \"precioUnitario\": 13000,\n  \"proveedorId\": {{id_proveedor}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('datos.precioUnitario = 13000', () => pm.expect(g(json, 'datos.precioUnitario')).to.eql(13000));",
+                  "pm.test('datos.stockActual = 25', () => pm.expect(g(json, 'datos.stockActual')).to.eql(25));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "47 · Producto inexistente (404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_empleado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/productos/999999",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "productos",
+                "999999"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 404."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 404', () => pm.response.to.have.status(404));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 Movimientos",
+      "item": [
+        {
+          "name": "48 · Registrar ENTRADA (empleado) (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_empleado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/movimientos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "movimientos"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 201.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productoId\": {{id_producto}},\n  \"tipo\": \"ENTRADA\",\n  \"cantidad\": 10,\n  \"motivo\": \"Compra factura FV-1021\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('datos.movimiento.stockAnterior = 25', () => pm.expect(g(json, 'datos.movimiento.stockAnterior')).to.eql(25));",
+                  "pm.test('datos.movimiento.stockResultante = 35', () => pm.expect(g(json, 'datos.movimiento.stockResultante')).to.eql(35));",
+                  "if (g(json, 'datos.movimiento.id') !== undefined) pm.collectionVariables.set('id_movimiento', g(json, 'datos.movimiento.id'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "49 · Registrar SALIDA que deja stock bajo (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_empleado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/movimientos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "movimientos"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 201.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productoId\": {{id_producto}},\n  \"tipo\": \"salida\",\n  \"cantidad\": 30,\n  \"motivo\": \"Producción del día\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('datos.movimiento.stockResultante = 5', () => pm.expect(g(json, 'datos.movimiento.stockResultante')).to.eql(5));",
+                  "pm.test('datos.producto.estadoStock = BAJO', () => pm.expect(g(json, 'datos.producto.estadoStock')).to.eql(\"BAJO\"));",
+                  "pm.test('Incluye datos.alerta', () => pm.expect(g(json, 'datos.alerta')).to.exist);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "50 · SALIDA mayor al stock disponible (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_empleado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/movimientos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "movimientos"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 409.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productoId\": {{id_producto}},\n  \"tipo\": \"SALIDA\",\n  \"cantidad\": 100\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.codigo = STOCK_INSUFICIENTE', () => pm.expect(g(json, 'error.codigo')).to.eql(\"STOCK_INSUFICIENTE\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "51 · AJUSTE sin motivo (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_empleado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/movimientos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "movimientos"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productoId\": {{id_producto}},\n  \"tipo\": \"AJUSTE\",\n  \"cantidad\": 12\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.detalles.0.campo = motivo', () => pm.expect(g(json, 'error.detalles.0.campo')).to.eql(\"motivo\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "52 · AJUSTE por conteo físico (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_empleado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/movimientos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "movimientos"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 201.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productoId\": {{id_producto}},\n  \"tipo\": \"AJUSTE\",\n  \"cantidad\": 12,\n  \"motivo\": \"Conteo físico de cierre\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('datos.movimiento.stockResultante = 12', () => pm.expect(g(json, 'datos.movimiento.stockResultante')).to.eql(12));",
+                  "pm.test('datos.movimiento.diferencia = 7', () => pm.expect(g(json, 'datos.movimiento.diferencia')).to.eql(7));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "53 · Tipo de movimiento inválido (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_empleado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/movimientos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "movimientos"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productoId\": {{id_producto}},\n  \"tipo\": \"REGALO\",\n  \"cantidad\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "54 · Historial del producto (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_empleado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/movimientos?productoId={{id_producto}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "movimientos"
+              ],
+              "query": [
+                {
+                  "key": "productoId",
+                  "value": "{{id_producto}}"
+                }
+              ]
+            },
+            "description": "Resultado esperado: HTTP 200."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('total = 4', () => pm.expect(g(json, 'total')).to.eql(4));",
+                  "pm.test('datos.3.motivo = Inventario inicial', () => pm.expect(g(json, 'datos.3.motivo')).to.eql(\"Inventario inicial\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "55 · Consultar movimiento por id (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_empleado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/movimientos/{{id_movimiento}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "movimientos",
+                "{{id_movimiento}}"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 200."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('datos.tipo = ENTRADA', () => pm.expect(g(json, 'datos.tipo')).to.eql(\"ENTRADA\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "56 · Filtro de fecha inválida (400)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_empleado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/movimientos?desde=2026-13-01",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "movimientos"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-13-01"
+                }
+              ]
+            },
+            "description": "Resultado esperado: HTTP 400."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.codigo = PARAMETRO_INVALIDO', () => pm.expect(g(json, 'error.codigo')).to.eql(\"PARAMETRO_INVALIDO\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "57 · Los movimientos no se editan (405)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/movimientos/{{id_movimiento}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "movimientos",
+                "{{id_movimiento}}"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 405.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cantidad\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 405', () => pm.response.to.have.status(405));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 Reportes",
+      "item": [
+        {
+          "name": "58 · Alertas de stock bajo (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_empleado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/alertas/stock-bajo",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "alertas",
+                "stock-bajo"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 200."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('datos tiene al menos 2 elementos', () => pm.expect(g(json, 'datos').length).to.be.at.least(2));",
+                  "pm.test('datos.0.estadoStock = AGOTADO', () => pm.expect(g(json, 'datos.0.estadoStock')).to.eql(\"AGOTADO\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "59 · Resumen del inventario (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/reportes/resumen",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "reportes",
+                "resumen"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 200."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('Incluye datos.valorTotalInventario', () => pm.expect(g(json, 'datos.valorTotalInventario')).to.exist);",
+                  "pm.test('datos.ultimosMovimientos tiene al menos 1 elementos', () => pm.expect(g(json, 'datos.ultimosMovimientos').length).to.be.at.least(1));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07 Bajas y seguridad final",
+      "item": [
+        {
+          "name": "60 · Eliminar proveedor con productos activos (409)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/proveedores/{{id_proveedor}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "proveedores",
+                "{{id_proveedor}}"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 409."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.codigo = PROVEEDOR_CON_PRODUCTOS', () => pm.expect(g(json, 'error.codigo')).to.eql(\"PROVEEDOR_CON_PRODUCTOS\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "61 · Dar de baja el producto (200)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/productos/{{id_producto}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "productos",
+                "{{id_producto}}"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 200."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "62 · Producto dado de baja ya no se consulta (404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_empleado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/productos/{{id_producto}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "productos",
+                "{{id_producto}}"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 404."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 404', () => pm.response.to.have.status(404));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "63 · Movimiento sobre producto inactivo (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_empleado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/movimientos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "movimientos"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 409.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productoId\": {{id_producto}},\n  \"tipo\": \"ENTRADA\",\n  \"cantidad\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.codigo = PRODUCTO_INACTIVO', () => pm.expect(g(json, 'error.codigo')).to.eql(\"PRODUCTO_INACTIVO\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "64 · Eliminar proveedor sin productos activos (200)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/proveedores/{{id_proveedor}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "proveedores",
+                "{{id_proveedor}}"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 200."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "65 · Eliminar categoría con producto inactivo (409)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/categorias/{{id_categoria}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "categorias",
+                "{{id_categoria}}"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 409."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('error.codigo = CATEGORIA_CON_PRODUCTOS', () => pm.expect(g(json, 'error.codigo')).to.eql(\"CATEGORIA_CON_PRODUCTOS\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "66 · Cambiar contraseña (empleado) (200)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_empleado}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/contrasena",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "contrasena"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 200.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contrasenaActual\": \"Empleado2026\",\n  \"contrasenaNueva\": \"NuevaClave2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "67 · Login con la contraseña nueva (200)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Resultado esperado: HTTP 200.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario\": \"empleado{{sufijo}}\",\n  \"contrasena\": \"NuevaClave2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const g = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);",
+                  "let json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "sufijo",
+      "value": ""
+    },
+    {
+      "key": "token_admin",
+      "value": ""
+    },
+    {
+      "key": "token_empleado",
+      "value": ""
+    },
+    {
+      "key": "id_usuario",
+      "value": ""
+    },
+    {
+      "key": "id_categoria",
+      "value": ""
+    },
+    {
+      "key": "nombre_categoria",
+      "value": ""
+    },
+    {
+      "key": "id_proveedor",
+      "value": ""
+    },
+    {
+      "key": "id_producto",
+      "value": ""
+    },
+    {
+      "key": "id_movimiento",
+      "value": ""
+    }
+  ]
+}
