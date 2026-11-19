@@ -1,0 +1,9 @@
+JUnit version 4.13.2
+.[CONFIG] Se aplic? config.local.properties (configuraci?n local del equipo).
+...[CONFIG] Se aplic? config.local.properties (configuraci?n local del equipo).
+.[CONFIG] No se encontr? /tmp/junit8398504935671967064/no-existe.properties; se usan valores por defecto.
+............................................................
+Time: 1.199
+
+OK (65 tests)
+
