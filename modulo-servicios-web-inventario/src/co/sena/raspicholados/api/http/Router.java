@@ -27,7 +27,8 @@ import java.util.Set;
  *   2. 404 y 405 siempre en JSON (H-08) y 405 con la cabecera Allow (H-07).
  *   3. Autenticación con token JWT y autorización por rol.
  *   4. Validación de Content-Type en POST/PUT (415).
- *   5. Cabeceras CORS, para que el front-end (AA4-EV03) pueda consumir la API.
+ *   5. Cabeceras CORS opcionales (cors.origen). Desde GA8 el front-end se sirve
+ *      en el mismo origen, por lo que por defecto no se envían.
  *   6. Conversión de cualquier excepción en una respuesta JSON uniforme.
  *   7. Registro (log) de cada petición con su duración.
  */
@@ -35,9 +36,16 @@ public class Router implements HttpHandler {
 
     private final List<Ruta> rutas = new ArrayList<Ruta>();
     private final JwtUtil jwt;
+    /** Origen permitido para CORS; null = sin cabeceras CORS (mismo origen). */
+    private String origenCors;
 
     public Router(JwtUtil jwt) {
         this.jwt = jwt;
+    }
+
+    /** Define el origen externo autorizado ("*" para cualquiera, vacío para ninguno). */
+    public void setOrigenCors(String origen) {
+        this.origenCors = origen == null || origen.trim().isEmpty() ? null : origen.trim();
     }
 
     // Registro de rutas -------------------------------------------------------
@@ -171,8 +179,13 @@ public class Router implements HttpHandler {
         return ruta;
     }
 
-    private static void agregarCabecerasCors(HttpExchange intercambio) {
-        intercambio.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+    private void agregarCabecerasCors(HttpExchange intercambio) {
+        intercambio.getResponseHeaders().set("X-Content-Type-Options", "nosniff");
+        intercambio.getResponseHeaders().set("Cache-Control", "no-store");
+        if (origenCors == null) {
+            return;
+        }
+        intercambio.getResponseHeaders().set("Access-Control-Allow-Origin", origenCors);
         intercambio.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
         intercambio.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type, Authorization");
         intercambio.getResponseHeaders().set("Access-Control-Expose-Headers", "Location, Retry-After");

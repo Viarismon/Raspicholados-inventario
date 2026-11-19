@@ -15,3 +15,10 @@ config.local.properties
 .vscode/
 .DS_Store
 Thumbs.db
+
+# GA8: pruebas unitarias y archivo compilado
+bin-test/
+dist/
+fuentes-test.txt
+# Las librerías de prueba (lib/test/*.jar) SÍ se versionan para que las
+# pruebas se puedan ejecutar sin descargar nada.
