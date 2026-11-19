@@ -1,3 +1,21 @@
+# RASPICHOLADOS — Sistema de inventario para heladería
+
+> **Estado actual (GA8-220501096-AA1-EV01, v1.1.0):** la aplicación web integrada está en
+> [`modulo-servicios-web-inventario`](modulo-servicios-web-inventario/README.md): interfaz web
+> (`web/`) + API REST (`src/`) + MySQL, con inicio de sesión JWT, roles y 65 pruebas unitarias
+> JUnit (`test/`). Ejecutar con `build.bat` y `run.bat`, y abrir `http://localhost:8080/`.
+
+| Carpeta | Evidencia |
+|---|---|
+| `modulo-inventario-java` | AA2-EV01 / AA3 · Java + JDBC + MySQL (consola) |
+| `modulo-web-servlets` | AA2-EV02 · Servlets / JSP |
+| `modulo-web-spring` · `modulo-movil-android` | AA3-EV01 |
+| `modulo-frontend-html-css-js` | AA4-EV03 · prototipo front-end (localStorage) |
+| `modulo-servicio-web-autenticacion` | AA5-EV01 · servicio de registro y login |
+| `modulo-servicios-web-inventario` | AA5-EV03 API REST · **GA8-AA1-EV01 aplicación web integrada** |
+
+---
+
 # RASPICHOLADOS — Módulo de Inventario (Java + JDBC)
 
 Evidencia **GA7-220501096-AA2-EV01** — Codificación de módulos del software.

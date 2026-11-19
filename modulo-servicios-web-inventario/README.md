@@ -1,8 +1,26 @@
-# API REST de inventario — Raspicholados
+# Aplicación web de inventario — Raspicholados
 
-**Evidencia:** GA7-220501096-AA5-EV03 — Diseño y desarrollo de servicios web, proyecto
+**Evidencias:**
+- GA7-220501096-AA5-EV03 — Diseño y desarrollo de servicios web (API REST, v1.0.0)
+- GA8-220501096-AA1-EV01 — Desarrollar software a partir de la integración de sus módulos (v1.1.0)
+
 **Aprendiz:** Viviana Arias Montilla · Tecnología en Análisis y Desarrollo de Software (SENA)
-**Versión:** 1.0.0
+**Versión:** 1.1.0
+
+## Novedades de la versión 1.1.0 (GA8-220501096-AA1-EV01)
+
+- **Integración front-end + back-end:** la interfaz web de la AA4-EV03 ahora vive en `web/`
+  y consume la API con `fetch` y token JWT. Un solo servidor publica la página
+  (`http://localhost:8080/`) y la API (`http://localhost:8080/api`).
+- **Inicio de sesión y roles en la interfaz:** el EMPLEADO no ve crear/editar/dar de baja
+  ni la gestión de usuarios (la API también lo impide con 403).
+- **Seguridad web:** escape de HTML contra XSS, `Content-Security-Policy`, bloqueo de
+  recorrido de directorios, token en `sessionStorage`, CORS deshabilitado por defecto.
+- **Configuración sin contraseñas en GitHub:** `config.local.properties` (ignorado por Git)
+  o variables de entorno `RASPI_*` reemplazan a `config.properties`.
+- **Pruebas unitarias:** 65 pruebas JUnit 4 en `test/` (`test.bat` / `test.sh`),
+  agrupadas en la suite `TodasLasPruebas`. Librerías en `lib/test/`.
+- **Archivo compilado:** `build.bat` genera `dist/raspicholados-inventario.jar`.
 
 Servicios web REST que cubren las funciones del software de inventario de la heladería
 Raspicholados: autenticación con token, usuarios con roles, categorías, proveedores,
@@ -61,11 +79,14 @@ modulo-servicios-web-inventario/
 1. **Base de datos.** En MySQL Workbench o phpMyAdmin (XAMPP) ejecute
    `sql/raspicholados_api_v2.sql`. Ojo: el script recrea las tablas del inventario.
 2. **Driver JDBC.** Copie `mysql-connector-j-x.x.x.jar` en la carpeta `lib\`.
-3. **Configuración.** Revise usuario y contraseña de MySQL en `config.properties`.
-   Para una prueba rápida sin MySQL cambie a `persistencia.modo=memoria`.
+3. **Configuración.** Copie `config.local.ejemplo.properties` como
+   `config.local.properties` y escriba ahí la contraseña de MySQL (ese archivo no se
+   sube a GitHub). Para una prueba rápida sin MySQL use `persistencia.modo=memoria`.
 4. **Compilar y ejecutar.** Doble clic en `build.bat` y luego en `run.bat`.
-   La consola debe mostrar `URL base : http://localhost:8080/api`.
-5. **Probar.** En Postman importe los dos archivos de `postman\`, seleccione el entorno
+   La consola debe mostrar `Aplicación : http://localhost:8080/`.
+5. **Usar la aplicación.** Abra `http://localhost:8080/` en el navegador e inicie sesión.
+6. **Pruebas unitarias.** Doble clic en `test.bat` (debe terminar en `OK (65 tests)`).
+7. **Probar la API.** En Postman importe los dos archivos de `postman\`, seleccione el entorno
    *Raspicholados Inventario Local* y use *Run collection*.
 
 Usuario inicial: `admin` / `Raspi2026*` (lo crea la API si la tabla `usuario` está vacía;

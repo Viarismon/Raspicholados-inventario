@@ -17,6 +17,6 @@ if errorlevel 1 (
   exit /b 1
 )
 del fuentes-test.txt
-java -Dfile.encoding=UTF-8 -cp "bin-test;lib\test\*" org.junit.runner.JUnitCore co.sena.raspicholados.api.TodasLasPruebas > pruebas\resultado_pruebas_unitarias.txt 2>&1
+java -Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -cp "bin-test;lib\test\*" org.junit.runner.JUnitCore co.sena.raspicholados.api.TodasLasPruebas > pruebas\resultado_pruebas_unitarias.txt 2>&1
 type pruebas\resultado_pruebas_unitarias.txt
 pause
