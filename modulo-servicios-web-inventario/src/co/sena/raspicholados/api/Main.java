@@ -8,6 +8,7 @@ import co.sena.raspicholados.api.controlador.ProductoControlador;
 import co.sena.raspicholados.api.controlador.ProveedorControlador;
 import co.sena.raspicholados.api.controlador.ReporteControlador;
 import co.sena.raspicholados.api.controlador.SistemaControlador;
+import co.sena.raspicholados.api.http.ManejadorEstatico;
 import co.sena.raspicholados.api.http.Router;
 import co.sena.raspicholados.api.repositorio.CategoriaRepositorio;
 import co.sena.raspicholados.api.repositorio.MovimientoRepositorio;
@@ -35,14 +36,17 @@ import co.sena.raspicholados.api.servicio.ProveedorServicio;
 import co.sena.raspicholados.api.servicio.ReporteServicio;
 import com.sun.net.httpserver.HttpServer;
 
+import java.io.File;
 import java.net.InetSocketAddress;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.concurrent.Executors;
 
 /**
- * Punto de entrada de la API REST de inventario de Raspicholados
- * (evidencia GA7-220501096-AA5-EV03).
+ * Punto de entrada de la aplicación web de inventario de Raspicholados.
+ *   - GA7-220501096-AA5-EV03: API REST (28 servicios).
+ *   - GA8-220501096-AA1-EV01: integración con el front-end, que ahora se
+ *     sirve desde la carpeta web/ en el mismo servidor.
  *
  * Arquitectura en capas (de afuera hacia adentro):
  *   http (Router)  ->  controlador  ->  servicio (reglas de negocio)
@@ -53,6 +57,8 @@ import java.util.concurrent.Executors;
  * servicios y registra las rutas de cada controlador.
  */
 public class Main {
+
+    public static final String VERSION = "1.1.0";
 
     public static void main(String[] args) throws Exception {
         Configuracion config = new Configuracion(args.length > 0 ? args[0] : "config.properties");
@@ -129,6 +135,7 @@ public class Main {
 
         // --- Rutas -------------------------------------------------------------------
         Router router = new Router(jwt);
+        router.setOrigenCors(config.texto("cors.origen", null));
         new SistemaControlador(modo).registrarRutas(router);
         new AutenticacionControlador(autenticacion).registrarRutas(router);
         new CategoriaControlador(new CategoriaServicio(categorias)).registrarRutas(router);
@@ -137,17 +144,23 @@ public class Main {
         new MovimientoControlador(servicioMovimientos).registrarRutas(router);
         new ReporteControlador(new ReporteServicio(productos, movimientos)).registrarRutas(router);
 
+        File carpetaWeb = new File(config.texto("web.directorio", "web"));
         HttpServer servidor = HttpServer.create(new InetSocketAddress(puerto), 0);
-        servidor.createContext("/", router);
+        servidor.createContext("/api", router);                         // servicios REST
+        servidor.createContext("/", new ManejadorEstatico(carpetaWeb)); // aplicación web
         servidor.setExecutor(Executors.newFixedThreadPool(16));
         servidor.start();
 
         System.out.println("==============================================================");
-        System.out.println(" API de inventario RASPICHOLADOS v1.0.0");
-        System.out.println(" URL base     : http://localhost:" + puerto + "/api");
+        System.out.println(" Inventario RASPICHOLADOS v" + VERSION + " (aplicación web + API REST)");
+        System.out.println(" Aplicación   : http://localhost:" + puerto + "/");
+        System.out.println(" URL base API : http://localhost:" + puerto + "/api");
         System.out.println(" Persistencia : " + modo);
         System.out.println(" Rutas        : " + router.getRutas().size() + " (ver GET /api)");
         System.out.println(" Documentación: GET /api/docs  y  docs/API.md");
+        if (!new File(carpetaWeb, "index.html").isFile()) {
+            System.out.println(" [AVISO] No se encontró " + carpetaWeb.getPath() + File.separator + "index.html");
+        }
         System.out.println(" Detener      : Ctrl + C");
         System.out.println("==============================================================");
     }

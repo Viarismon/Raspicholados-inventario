@@ -58,7 +58,7 @@ public class SistemaControlador {
         Map<String, Object> m = new LinkedHashMap<String, Object>();
         m.put("estado", "OK");
         m.put("servicio", "API de inventario Raspicholados");
-        m.put("version", "1.0.0");
+        m.put("version", co.sena.raspicholados.api.Main.VERSION);
         m.put("persistencia", modoPersistencia);
         m.put("segundosEnLinea", (System.currentTimeMillis() - inicio) / 1000);
         m.put("fecha", Fechas.ahora());

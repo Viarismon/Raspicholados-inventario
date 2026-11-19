@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Raspicholados | Sistema de Inventario</title>
+  <meta name="description" content="Aplicación web de inventario para la heladería Raspicholados" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- ============================================================
+       PANTALLA DE INICIO DE SESIÓN
+       Primera pantalla del mapa de navegación. Sin token válido no
+       se muestra ninguna otra vista.
+       ============================================================ -->
+  <section id="pantalla-login" class="login-pantalla" hidden>
+    <form id="form-login" class="login-tarjeta" autocomplete="on" novalidate>
+      <div class="brand brand-login">
+        <span class="brand-mark">🍧</span>
+        <div class="brand-text">
+          <strong>Raspicholados</strong>
+          <small>Control de inventario</small>
+        </div>
+      </div>
+      <h1>Iniciar sesión</h1>
+      <p class="subtitle">Ingrese con su usuario de la heladería</p>
+
+      <div class="field">
+        <label for="login-usuario">Usuario</label>
+        <input type="text" id="login-usuario" autocomplete="username" required maxlength="30" />
+      </div>
+      <div class="field">
+        <label for="login-contrasena">Contraseña</label>
+        <input type="password" id="login-contrasena" autocomplete="current-password" required maxlength="72" />
+      </div>
+      <p id="login-error" class="mensaje-error" role="alert" hidden></p>
+      <button type="submit" class="btn btn-primary btn-bloque" id="btn-login">Ingresar</button>
+    </form>
+  </section>
+
+  <!-- ============================================================
+       APLICACIÓN: barra lateral + vistas (SPA)
+       ============================================================ -->
+  <div class="app-shell" id="app" hidden>
+
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark">🍧</span>
+        <div class="brand-text">
+          <strong>Raspicholados</strong>
+          <small>Control de inventario</small>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="Navegación principal">
+        <button class="nav-item is-active" data-view="dashboard"><span class="nav-icon">◆</span> Panel general</button>
+        <button class="nav-item" data-view="inventario"><span class="nav-icon">▤</span> Inventario</button>
+        <button class="nav-item" data-view="movimientos"><span class="nav-icon">⇄</span> Movimientos</button>
+        <button class="nav-item" data-view="reportes"><span class="nav-icon">▦</span> Reportes</button>
+        <button class="nav-item solo-admin" data-view="usuarios"><span class="nav-icon">◎</span> Usuarios</button>
+      </nav>
+
+      <div class="usuario-caja">
+        <span class="usuario-nombre" id="usuario-nombre">—</span>
+        <span class="usuario-rol" id="usuario-rol">—</span>
+        <button class="btn btn-ghost btn-salir" id="btn-salir">Cerrar sesión</button>
+      </div>
+
+      <div class="sidebar-footer">
+        <p>GA8-220501096-AA1-EV01</p>
+        <p>Aplicación web integrada v1.1.0</p>
+      </div>
+    </aside>
+
+    <main class="content">
+
+      <!-- ===================== VISTA: PANEL GENERAL ===================== -->
+      <section id="view-dashboard" class="view is-active">
+        <header class="view-header">
+          <div>
+            <h1>Panel general</h1>
+            <p class="subtitle">Estado actual del inventario (datos en MySQL)</p>
+          </div>
+          <button class="btn btn-primary solo-admin" id="btn-nuevo-producto-dash">+ Nuevo producto</button>
+        </header>
+
+        <div class="kpi-grid">
+          <div class="kpi-card"><span class="kpi-label">Productos activos</span><span class="kpi-value" id="kpi-total-productos">0</span></div>
+          <div class="kpi-card"><span class="kpi-label">Unidades en stock</span><span class="kpi-value" id="kpi-total-unidades">0</span></div>
+          <div class="kpi-card kpi-warning"><span class="kpi-label">Agotados o en stock bajo</span><span class="kpi-value" id="kpi-stock-bajo">0</span></div>
+          <div class="kpi-card"><span class="kpi-label">Valor del inventario</span><span class="kpi-value" id="kpi-valor-inventario">$0</span></div>
+        </div>
+
+        <div class="dash-grid">
+          <div class="panel">
+            <h2>Productos por categoría</h2>
+            <div id="chart-categorias" class="bar-chart"></div>
+          </div>
+          <div class="panel">
+            <h2>Alertas de reabastecimiento</h2>
+            <ul id="lista-alertas" class="alert-list"></ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== VISTA: INVENTARIO ===================== -->
+      <section id="view-inventario" class="view">
+        <header class="view-header">
+          <div>
+            <h1>Inventario</h1>
+            <p class="subtitle">Consulta los productos; el administrador puede crear, editar y dar de baja</p>
+          </div>
+          <button class="btn btn-primary solo-admin" id="btn-nuevo-producto">+ Nuevo producto</button>
+        </header>
+
+        <div class="toolbar">
+          <input type="search" id="buscador" placeholder="Buscar producto por nombre..." aria-label="Buscar producto" />
+          <select id="filtro-categoria" aria-label="Filtrar por categoría">
+            <option value="todas">Todas las categorías</option>
+          </select>
+          <select id="filtro-estado" aria-label="Filtrar por estado de stock">
+            <option value="todos">Todos los estados</option>
+            <option value="NORMAL">Normal</option>
+            <option value="BAJO">Stock bajo</option>
+            <option value="AGOTADO">Agotado</option>
+          </select>
+        </div>
+
+        <div class="table-wrap">
+          <table class="tabla">
+            <thead>
+              <tr>
+                <th>Producto</th><th>Categoría</th><th>Unidad</th><th>Stock actual</th>
+                <th>Stock mínimo</th><th>Precio unitario</th><th>Proveedor</th><th>Estado</th><th class="solo-admin">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-inventario"></tbody>
+          </table>
+          <p id="tabla-vacia" class="tabla-vacia" hidden>No hay productos que coincidan con la búsqueda.</p>
+        </div>
+      </section>
+
+      <!-- ===================== VISTA: MOVIMIENTOS ===================== -->
+      <section id="view-movimientos" class="view">
+        <header class="view-header">
+          <div>
+            <h1>Movimientos de inventario</h1>
+            <p class="subtitle">Registra entradas y salidas; el stock se actualiza en la base de datos</p>
+          </div>
+        </header>
+
+        <form id="form-movimiento" class="form-movimiento panel" novalidate>
+          <div class="field">
+            <label for="mov-producto">Producto</label>
+            <select id="mov-producto" required></select>
+          </div>
+          <div class="field">
+            <label for="mov-tipo">Tipo de movimiento</label>
+            <select id="mov-tipo" required>
+              <option value="ENTRADA">Entrada (compra / reposición)</option>
+              <option value="SALIDA">Salida (venta / consumo)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="mov-cantidad">Cantidad</label>
+            <input type="number" id="mov-cantidad" min="1" step="1" required />
+          </div>
+          <div class="field">
+            <label for="mov-motivo">Motivo / observación</label>
+            <input type="text" id="mov-motivo" maxlength="150" placeholder="Ej: Compra a proveedor, venta del día..." />
+          </div>
+          <button type="submit" class="btn btn-primary">Registrar movimiento</button>
+        </form>
+        <p id="mov-error" class="mensaje-error" role="alert" hidden></p>
+
+        <div class="table-wrap">
+          <h2>Historial reciente</h2>
+          <table class="tabla">
+            <thead>
+              <tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Cantidad</th><th>Stock resultante</th><th>Usuario</th><th>Motivo</th></tr>
+            </thead>
+            <tbody id="tbody-movimientos"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===================== VISTA: REPORTES ===================== -->
+      <section id="view-reportes" class="view">
+        <header class="view-header">
+          <div>
+            <h1>Reportes</h1>
+            <p class="subtitle">Resumen calculado por la API y exportación a CSV</p>
+          </div>
+        </header>
+        <div class="panel">
+          <h2>Resumen ejecutivo</h2>
+          <p id="resumen-texto">Cargando resumen...</p>
+        </div>
+        <div class="panel">
+          <p>Descarga el inventario completo en formato CSV para análisis externo o para anexar a informes.</p>
+          <button class="btn btn-secondary" id="btn-exportar-csv">Descargar inventario (.csv)</button>
+        </div>
+      </section>
+
+      <!-- ===================== VISTA: USUARIOS (solo administrador) ===================== -->
+      <section id="view-usuarios" class="view solo-admin">
+        <header class="view-header">
+          <div>
+            <h1>Usuarios</h1>
+            <p class="subtitle">Registra empleados y administradores del sistema</p>
+          </div>
+        </header>
+
+        <form id="form-usuario" class="form-movimiento panel" novalidate>
+          <div class="field">
+            <label for="usu-nombre-usuario">Usuario</label>
+            <input type="text" id="usu-nombre-usuario" required maxlength="30" placeholder="Ej: laura.gomez" />
+          </div>
+          <div class="field">
+            <label for="usu-nombre-completo">Nombre completo</label>
+            <input type="text" id="usu-nombre-completo" required maxlength="100" />
+          </div>
+          <div class="field">
+            <label for="usu-contrasena">Contraseña</label>
+            <input type="password" id="usu-contrasena" required maxlength="72" autocomplete="new-password" placeholder="Mínimo 8, con letras y números" />
+          </div>
+          <div class="field">
+            <label for="usu-rol">Rol</label>
+            <select id="usu-rol">
+              <option value="EMPLEADO">Empleado</option>
+              <option value="ADMINISTRADOR">Administrador</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary">Registrar usuario</button>
+        </form>
+        <p id="usu-error" class="mensaje-error" role="alert" hidden></p>
+
+        <div class="table-wrap">
+          <table class="tabla">
+            <thead><tr><th>Usuario</th><th>Nombre completo</th><th>Rol</th><th>Estado</th><th>Registro</th></tr></thead>
+            <tbody id="tbody-usuarios"></tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ===================== MODAL: CREAR / EDITAR PRODUCTO (administrador) ===================== -->
+  <div class="modal-overlay" id="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+      <div class="modal-header">
+        <h2 id="modal-titulo">Nuevo producto</h2>
+        <button class="modal-close" id="btn-cerrar-modal" aria-label="Cerrar">×</button>
+      </div>
+
+      <form id="form-producto" class="form-producto" novalidate>
+        <input type="hidden" id="prod-id" />
+        <div class="field">
+          <label for="prod-nombre">Nombre del producto</label>
+          <input type="text" id="prod-nombre" required maxlength="80" placeholder="Ej: Pulpa de mora" />
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="prod-categoria">Categoría</label>
+            <select id="prod-categoria" required></select>
+          </div>
+          <div class="field">
+            <label for="prod-unidad">Unidad de medida</label>
+            <input type="text" id="prod-unidad" required maxlength="20" placeholder="Ej: Unidad, Kilogramo, Litro" />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field" id="campo-stock-inicial">
+            <label for="prod-stock">Stock inicial</label>
+            <input type="number" id="prod-stock" min="0" step="1" />
+          </div>
+          <div class="field">
+            <label for="prod-stock-min">Stock mínimo</label>
+            <input type="number" id="prod-stock-min" min="0" step="1" required />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="prod-precio">Precio unitario (COP)</label>
+            <input type="number" id="prod-precio" min="0" step="0.01" required />
+          </div>
+          <div class="field">
+            <label for="prod-proveedor">Proveedor</label>
+            <select id="prod-proveedor"><option value="">Sin proveedor</option></select>
+          </div>
+        </div>
+        <p class="nota-campo" id="nota-stock" hidden>El stock solo cambia con movimientos de entrada o salida.</p>
+        <p id="prod-error" class="mensaje-error" role="alert" hidden></p>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="btn-eliminar-producto" hidden>Dar de baja</button>
+          <div class="modal-actions-right">
+            <button type="button" class="btn btn-ghost" id="btn-cancelar-modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Guardar</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
