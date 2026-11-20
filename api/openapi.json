@@ -1,0 +1,2621 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "API de inventario Raspicholados",
+    "version": "1.1.0",
+    "description": "Servicios web REST del sistema de inventario de la heladería Raspicholados. Evidencia GA7-220501096-AA5-EV03 (SENA, Tecnología en Análisis y Desarrollo de Software). Autora: Viviana Arias Montilla.\n\nTodas las respuestas son JSON en UTF-8. Las respuestas exitosas usan { \"datos\": ... } y los errores { \"error\": { estado, codigo, mensaje, detalles } }.",
+    "contact": {
+      "name": "Viviana Arias Montilla"
+    },
+    "license": {
+      "name": "MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080/api",
+      "description": "Servidor local"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Sistema"
+    },
+    {
+      "name": "Autenticación y usuarios"
+    },
+    {
+      "name": "Categorías"
+    },
+    {
+      "name": "Proveedores"
+    },
+    {
+      "name": "Productos"
+    },
+    {
+      "name": "Movimientos de inventario"
+    },
+    {
+      "name": "Reportes"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "tags": [
+          "Sistema"
+        ],
+        "operationId": "sis_01",
+        "summary": "SIS-01 · Índice de rutas",
+        "description": "Lista todas las rutas registradas con su método y nivel de acceso.\n\nAcceso: **PUBLICA**",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Lista de rutas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/salud": {
+      "get": {
+        "tags": [
+          "Sistema"
+        ],
+        "operationId": "sis_02",
+        "summary": "SIS-02 · Estado del servicio",
+        "description": "Permite a herramientas de monitoreo comprobar que la API responde. Indica el modo de persistencia activo (mysql o memoria).\n\nAcceso: **PUBLICA**",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Servicio en línea",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/docs": {
+      "get": {
+        "tags": [
+          "Sistema"
+        ],
+        "operationId": "sis_03",
+        "summary": "SIS-03 · Especificación OpenAPI",
+        "description": "Devuelve este contrato en formato OpenAPI 3.0.3 (JSON). Se puede importar en Postman o en editor.swagger.io.\n\nAcceso: **PUBLICA**",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Documento OpenAPI",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Autenticación y usuarios"
+        ],
+        "operationId": "aut_01",
+        "summary": "AUT-01 · Iniciar sesión",
+        "description": "Valida usuario y contraseña. Si son correctos entrega un token JWT (HS256) que debe enviarse en el encabezado Authorization: Bearer <token> de las demás peticiones.\n\nReglas de negocio:\n- El mensaje de error es el mismo si el usuario no existe o si la clave es incorrecta.\n- Cinco fallos seguidos bloquean la cuenta 15 minutos.\n\nAcceso: **PUBLICA**",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Login"
+              },
+              "example": {
+                "usuario": "admin",
+                "contrasena": "Raspi2026*"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Autenticación exitosa: token, tipo, expiraEnSegundos y usuario",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mensaje": {
+                      "type": "string"
+                    },
+                    "datos": {
+                      "$ref": "#/components/schemas/RespuestaLogin"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON malformado o campos faltantes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Usuario o contraseña incorrectos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type distinto de application/json",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Cuenta bloqueada por 15 minutos tras 5 intentos fallidos (incluye Retry-After)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/perfil": {
+      "get": {
+        "tags": [
+          "Autenticación y usuarios"
+        ],
+        "operationId": "aut_02",
+        "summary": "AUT-02 · Perfil del usuario autenticado",
+        "description": "Devuelve los datos del usuario dueño del token (sin el hash de la contraseña).\n\nAcceso: **AUTENTICADA**",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Datos del usuario",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mensaje": {
+                      "type": "string"
+                    },
+                    "datos": {
+                      "$ref": "#/components/schemas/Usuario"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o expirado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/contrasena": {
+      "put": {
+        "tags": [
+          "Autenticación y usuarios"
+        ],
+        "operationId": "aut_03",
+        "summary": "AUT-03 · Cambiar la propia contraseña",
+        "description": "El usuario autenticado cambia su contraseña indicando la actual y la nueva.\n\nReglas de negocio:\n- La nueva contraseña debe tener 8 a 64 caracteres, al menos una letra y un número.\n\nAcceso: **AUTENTICADA**",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CambioContrasena"
+              },
+              "example": {
+                "contrasenaActual": "Empleado2026",
+                "contrasenaNueva": "NuevaClave2026"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contraseña actualizada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "La nueva no cumple la política o es igual a la actual",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "La contraseña actual no es correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/usuarios": {
+      "post": {
+        "tags": [
+          "Autenticación y usuarios"
+        ],
+        "operationId": "usu_01",
+        "summary": "USU-01 · Registrar usuario",
+        "description": "El administrador crea cuentas para los empleados de la heladería (o para otro administrador).\n\nReglas de negocio:\n- nombreUsuario: 3 a 30 caracteres (letras, números, punto, guion, guion bajo), único.\n- rol: ADMINISTRADOR o EMPLEADO (por defecto EMPLEADO).\n- La contraseña se guarda con PBKDF2-HMAC-SHA256 (210 000 iteraciones y salt aleatoria).\n\nAcceso: **ADMINISTRADOR**",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UsuarioEntrada"
+              },
+              "example": {
+                "nombreUsuario": "laura.gomez",
+                "nombreCompleto": "Laura Gómez",
+                "contrasena": "Empleado2026",
+                "rol": "EMPLEADO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Usuario creado (cabecera Location)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mensaje": {
+                      "type": "string"
+                    },
+                    "datos": {
+                      "$ref": "#/components/schemas/Usuario"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o expirado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "El rol no tiene permiso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "El nombre de usuario ya existe",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Autenticación y usuarios"
+        ],
+        "operationId": "usu_02",
+        "summary": "USU-02 · Listar usuarios",
+        "description": "Lista los usuarios registrados.\n\nAcceso: **ADMINISTRADOR**",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de usuarios",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "datos": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Usuario"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o expirado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "El rol no tiene permiso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categorias": {
+      "get": {
+        "tags": [
+          "Categorías"
+        ],
+        "operationId": "cat_01",
+        "summary": "CAT-01 · Listar categorías",
+        "description": "Lista las categorías con la cantidad de productos activos de cada una.\n\nAcceso: **AUTENTICADA**",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "datos": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Categoria"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o expirado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Categorías"
+        ],
+        "operationId": "cat_03",
+        "summary": "CAT-03 · Crear categoría",
+        "description": "Registra una nueva categoría de productos.\n\nReglas de negocio:\n- nombre: 2 a 50 caracteres, único sin distinguir mayúsculas.\n\nAcceso: **ADMINISTRADOR**",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoriaEntrada"
+              },
+              "example": {
+                "nombre": "Granizados",
+                "descripcion": "Granizados de fruta natural"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Creada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mensaje": {
+                      "type": "string"
+                    },
+                    "datos": {
+                      "$ref": "#/components/schemas/Categoria"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o expirado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "El rol no tiene permiso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ya existe una categoría con ese nombre",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categorias/{id}": {
+      "get": {
+        "tags": [
+          "Categorías"
+        ],
+        "operationId": "cat_02",
+        "summary": "CAT-02 · Consultar categoría",
+        "description": "Obtiene una categoría por su id.\n\nAcceso: **AUTENTICADA**",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del recurso (entero positivo)",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Categoría",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mensaje": {
+                      "type": "string"
+                    },
+                    "datos": {
+                      "$ref": "#/components/schemas/Categoria"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Id no numérico",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o expirado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Categorías"
+        ],
+        "operationId": "cat_04",
+        "summary": "CAT-04 · Actualizar categoría",
+        "description": "Reemplaza nombre y descripción. Si cambia el nombre, los productos de la categoría se actualizan en cascada.\n\nAcceso: **ADMINISTRADOR**",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del recurso (entero positivo)",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoriaEntrada"
+              },
+              "example": {
+                "nombre": "Granizados Premium",
+                "descripcion": "Línea premium"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Actualizada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mensaje": {
+                      "type": "string"
+                    },
+                    "datos": {
+                      "$ref": "#/components/schemas/Categoria"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o expirado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "El rol no tiene permiso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Nombre repetido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Categorías"
+        ],
+        "operationId": "cat_05",
+        "summary": "CAT-05 · Eliminar categoría",
+        "description": "Elimina una categoría que no tenga productos asociados.\n\nAcceso: **ADMINISTRADOR**",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del recurso (entero positivo)",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Eliminada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o expirado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "El rol no tiene permiso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Tiene productos asociados (incluidos inactivos)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/proveedores": {
+      "get": {
+        "tags": [
+          "Proveedores"
+        ],
+        "operationId": "prv_01",
+        "summary": "PRV-01 · Listar proveedores",
+        "description": "Lista los proveedores ordenados por nombre.\n\nAcceso: **AUTENTICADA**",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "datos": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Proveedor"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o expirado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Proveedores"
+        ],
+        "operationId": "prv_03",
+        "summary": "PRV-03 · Crear proveedor",
+        "description": "Registra un proveedor de insumos.\n\nReglas de negocio:\n- nit: 6 a 12 dígitos con dígito de verificación opcional (900123456-1), único.\n- telefono (opcional): 7 a 20 caracteres numéricos.\n- correo (opcional): formato de correo válido.\n\nAcceso: **ADMINISTRADOR**",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProveedorEntrada"
+              },
+              "example": {
+                "nit": "901234567-8",
+                "nombre": "Pulpas del Pacífico",
+                "telefono": "3001234567",
+                "correo": "ventas@pulpaspacifico.co",
+                "direccion": "Cl 10 # 4-20, Buenaventura"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Creado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mensaje": {
+                      "type": "string"
+                    },
+                    "datos": {
+                      "$ref": "#/components/schemas/Proveedor"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o expirado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "El rol no tiene permiso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "NIT repetido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/proveedores/{id}": {
+      "get": {
+        "tags": [
+          "Proveedores"
+        ],
+        "operationId": "prv_02",
+        "summary": "PRV-02 · Consultar proveedor",
+        "description": "Obtiene un proveedor por su id.\n\nAcceso: **AUTENTICADA**",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del recurso (entero positivo)",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Proveedor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mensaje": {
+                      "type": "string"
+                    },
+                    "datos": {
+                      "$ref": "#/components/schemas/Proveedor"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Id no numérico",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o expirado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Proveedores"
+        ],
+        "operationId": "prv_04",
+        "summary": "PRV-04 · Actualizar proveedor",
+        "description": "Reemplaza los datos del proveedor.\n\nAcceso: **ADMINISTRADOR**",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del recurso (entero positivo)",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProveedorEntrada"
+              },
+              "example": {
+                "nit": "901234567-8",
+                "nombre": "Pulpas del Pacífico S.A.S.",
+                "telefono": "3001234567",
+                "correo": "ventas@pulpaspacifico.co"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Actualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mensaje": {
+                      "type": "string"
+                    },
+                    "datos": {
+                      "$ref": "#/components/schemas/Proveedor"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o expirado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "El rol no tiene permiso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "NIT repetido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Proveedores"
+        ],
+        "operationId": "prv_05",
+        "summary": "PRV-05 · Eliminar proveedor",
+        "description": "Elimina un proveedor que no surta productos activos. En los productos inactivos el proveedor queda en null.\n\nAcceso: **ADMINISTRADOR**",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del recurso (entero positivo)",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Eliminado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o expirado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "El rol no tiene permiso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Surte productos activos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/productos": {
+      "get": {
+        "tags": [
+          "Productos"
+        ],
+        "operationId": "pro_01",
+        "summary": "PRO-01 · Listar y filtrar productos",
+        "description": "Lista los productos activos. Todos los filtros son opcionales y combinables.\n\nAcceso: **AUTENTICADA**",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "categoria",
+            "in": "query",
+            "required": false,
+            "description": "Nombre exacto de la categoría",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "buscar",
+            "in": "query",
+            "required": false,
+            "description": "Texto contenido en el nombre",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "proveedorId",
+            "in": "query",
+            "required": false,
+            "description": "Id del proveedor",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "stockBajo",
+            "in": "query",
+            "required": false,
+            "description": "true = solo productos BAJO o AGOTADO",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de productos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "datos": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Producto"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parámetro inválido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o expirado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Productos"
+        ],
+        "operationId": "pro_03",
+        "summary": "PRO-03 · Crear producto",
+        "description": "Registra un producto. Si se envía stockInicial mayor que 0, se registra automáticamente un movimiento de ENTRADA 'Inventario inicial'.\n\nReglas de negocio:\n- La categoría y el proveedor deben existir.\n- precioUnitario >= 0 con máximo 2 decimales; stockMinimo entero >= 0.\n- No se acepta stockActual: el stock solo cambia con movimientos.\n\nAcceso: **ADMINISTRADOR**",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductoEntrada"
+              },
+              "example": {
+                "nombre": "Pulpa de maracuyá",
+                "categoria": "Insumos",
+                "unidadMedida": "Kilogramo",
+                "stockMinimo": 8,
+                "precioUnitario": 12500,
+                "proveedorId": 1,
+                "stockInicial": 25
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Creado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mensaje": {
+                      "type": "string"
+                    },
+                    "datos": {
+                      "$ref": "#/components/schemas/Producto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos (se listan todos los errores)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o expirado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "El rol no tiene permiso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ya existe un producto activo con ese nombre",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/productos/{id}": {
+      "get": {
+        "tags": [
+          "Productos"
+        ],
+        "operationId": "pro_02",
+        "summary": "PRO-02 · Consultar producto",
+        "description": "Obtiene un producto activo con su estado de stock y valor de inventario.\n\nAcceso: **AUTENTICADA**",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del recurso (entero positivo)",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Producto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mensaje": {
+                      "type": "string"
+                    },
+                    "datos": {
+                      "$ref": "#/components/schemas/Producto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Id no numérico",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o expirado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe o fue dado de baja",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Productos"
+        ],
+        "operationId": "pro_04",
+        "summary": "PRO-04 · Actualizar producto",
+        "description": "Reemplaza los datos descriptivos del producto. El stock no se modifica aquí.\n\nAcceso: **ADMINISTRADOR**",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del recurso (entero positivo)",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductoActualizacion"
+              },
+              "example": {
+                "nombre": "Pulpa de maracuyá",
+                "categoria": "Insumos",
+                "unidadMedida": "Kilogramo",
+                "stockMinimo": 8,
+                "precioUnitario": 13000,
+                "proveedorId": 1
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Actualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mensaje": {
+                      "type": "string"
+                    },
+                    "datos": {
+                      "$ref": "#/components/schemas/Producto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos o se intentó cambiar el stock",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o expirado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "El rol no tiene permiso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Nombre repetido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Productos"
+        ],
+        "operationId": "pro_05",
+        "summary": "PRO-05 · Dar de baja producto",
+        "description": "Baja lógica (activo = false). El producto deja de listarse, pero su historial de movimientos se conserva.\n\nAcceso: **ADMINISTRADOR**",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del recurso (entero positivo)",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dado de baja",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o expirado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "El rol no tiene permiso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/movimientos": {
+      "post": {
+        "tags": [
+          "Movimientos de inventario"
+        ],
+        "operationId": "mov_01",
+        "summary": "MOV-01 · Registrar movimiento",
+        "description": "Registra una ENTRADA (compra), SALIDA (venta, consumo o merma) o AJUSTE (conteo físico). La operación es atómica: se bloquea la fila del producto, se valida y se actualiza el stock en una sola transacción. Devuelve el movimiento, el producto actualizado y una alerta si el stock quedó BAJO o AGOTADO.\n\nReglas de negocio:\n- ENTRADA y SALIDA: cantidad entera >= 1.\n- AJUSTE: cantidad >= 0 es el conteo físico y el motivo es obligatorio.\n- Una SALIDA nunca puede dejar el stock negativo.\n- Lo pueden registrar el administrador y los empleados; queda el usuario que lo hizo.\n\nAcceso: **AUTENTICADA**",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MovimientoEntrada"
+              },
+              "example": {
+                "productoId": 1,
+                "tipo": "SALIDA",
+                "cantidad": 5,
+                "motivo": "Ventas del turno de la tarde"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Movimiento registrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mensaje": {
+                      "type": "string"
+                    },
+                    "datos": {
+                      "$ref": "#/components/schemas/ResultadoMovimiento"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o expirado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Producto inexistente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "STOCK_INSUFICIENTE, PRODUCTO_INACTIVO o STOCK_EXCEDE_MAXIMO",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Movimientos de inventario"
+        ],
+        "operationId": "mov_02",
+        "summary": "MOV-02 · Consultar historial de movimientos",
+        "description": "Historial del más reciente al más antiguo, con filtros opcionales.\n\nAcceso: **AUTENTICADA**",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "productoId",
+            "in": "query",
+            "required": false,
+            "description": "Id del producto",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": false,
+            "description": "ENTRADA, SALIDA o AJUSTE",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "required": false,
+            "description": "Fecha inicial AAAA-MM-DD",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "required": false,
+            "description": "Fecha final AAAA-MM-DD",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "description": "Máximo de registros (1 a 500, por defecto 100)",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de movimientos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "datos": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Movimiento"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parámetro inválido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o expirado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/movimientos/{id}": {
+      "get": {
+        "tags": [
+          "Movimientos de inventario"
+        ],
+        "operationId": "mov_03",
+        "summary": "MOV-03 · Consultar movimiento",
+        "description": "Obtiene un movimiento por su id.\n\nAcceso: **AUTENTICADA**",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del recurso (entero positivo)",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Movimiento",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mensaje": {
+                      "type": "string"
+                    },
+                    "datos": {
+                      "$ref": "#/components/schemas/Movimiento"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o expirado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/alertas/stock-bajo": {
+      "get": {
+        "tags": [
+          "Reportes"
+        ],
+        "operationId": "rep_01",
+        "summary": "REP-01 · Alertas de stock bajo",
+        "description": "Productos en estado AGOTADO o BAJO, primero los agotados, con la cantidad sugerida para pedir (hasta el doble del mínimo) y el proveedor a contactar.\n\nAcceso: **AUTENTICADA**",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de alertas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "datos": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Alerta"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o expirado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reportes/resumen": {
+      "get": {
+        "tags": [
+          "Reportes"
+        ],
+        "operationId": "rep_02",
+        "summary": "REP-02 · Resumen del inventario",
+        "description": "Indicadores para el administrador: productos activos, unidades, valor total del inventario, agotados, stock bajo, productos por categoría, movimientos del día y últimos 5 movimientos.\n\nAcceso: **AUTENTICADA**",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resumen",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mensaje": {
+                      "type": "string"
+                    },
+                    "datos": {
+                      "$ref": "#/components/schemas/Resumen"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido o expirado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Token obtenido en POST /auth/login"
+      }
+    },
+    "schemas": {
+      "Login": {
+        "type": "object",
+        "required": [
+          "usuario",
+          "contrasena"
+        ],
+        "properties": {
+          "usuario": {
+            "type": "string",
+            "maxLength": 30,
+            "example": "admin"
+          },
+          "contrasena": {
+            "type": "string",
+            "maxLength": 64,
+            "example": "Raspi2026*",
+            "format": "password"
+          }
+        }
+      },
+      "RespuestaLogin": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "JWT HS256"
+          },
+          "tipo": {
+            "type": "string",
+            "example": "Bearer"
+          },
+          "expiraEnSegundos": {
+            "type": "integer",
+            "example": 7200
+          },
+          "usuario": {
+            "$ref": "#/components/schemas/Usuario"
+          }
+        }
+      },
+      "CambioContrasena": {
+        "type": "object",
+        "required": [
+          "contrasenaActual",
+          "contrasenaNueva"
+        ],
+        "properties": {
+          "contrasenaActual": {
+            "type": "string",
+            "format": "password"
+          },
+          "contrasenaNueva": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 64,
+            "format": "password"
+          }
+        }
+      },
+      "Usuario": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nombreUsuario": {
+            "type": "string"
+          },
+          "nombreCompleto": {
+            "type": "string"
+          },
+          "rol": {
+            "type": "string",
+            "enum": [
+              "ADMINISTRADOR",
+              "EMPLEADO"
+            ]
+          },
+          "activo": {
+            "type": "boolean"
+          },
+          "fechaRegistro": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UsuarioEntrada": {
+        "type": "object",
+        "required": [
+          "nombreUsuario",
+          "nombreCompleto",
+          "contrasena"
+        ],
+        "properties": {
+          "nombreUsuario": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._-]{3,30}$"
+          },
+          "nombreCompleto": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 100
+          },
+          "contrasena": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 64,
+            "format": "password",
+            "description": "Al menos una letra y un número"
+          },
+          "rol": {
+            "type": "string",
+            "enum": [
+              "ADMINISTRADOR",
+              "EMPLEADO"
+            ],
+            "default": "EMPLEADO"
+          }
+        }
+      },
+      "Categoria": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "descripcion": {
+            "type": "string",
+            "nullable": true
+          },
+          "cantidadProductos": {
+            "type": "integer",
+            "description": "Productos activos"
+          }
+        }
+      },
+      "CategoriaEntrada": {
+        "type": "object",
+        "required": [
+          "nombre"
+        ],
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "descripcion": {
+            "type": "string",
+            "maxLength": 200
+          }
+        }
+      },
+      "Proveedor": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nit": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "telefono": {
+            "type": "string",
+            "nullable": true
+          },
+          "correo": {
+            "type": "string",
+            "nullable": true
+          },
+          "direccion": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ProveedorEntrada": {
+        "type": "object",
+        "required": [
+          "nit",
+          "nombre"
+        ],
+        "properties": {
+          "nit": {
+            "type": "string",
+            "pattern": "^[0-9]{6,12}(-[0-9])?$",
+            "example": "900123456-1"
+          },
+          "nombre": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 100
+          },
+          "telefono": {
+            "type": "string",
+            "pattern": "^[0-9+() -]{7,20}$"
+          },
+          "correo": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 100
+          },
+          "direccion": {
+            "type": "string",
+            "maxLength": 150
+          }
+        }
+      },
+      "Producto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "categoria": {
+            "type": "string"
+          },
+          "unidadMedida": {
+            "type": "string"
+          },
+          "stockActual": {
+            "type": "integer"
+          },
+          "stockMinimo": {
+            "type": "integer"
+          },
+          "estadoStock": {
+            "type": "string",
+            "enum": [
+              "NORMAL",
+              "BAJO",
+              "AGOTADO"
+            ],
+            "description": "Calculado"
+          },
+          "precioUnitario": {
+            "type": "number"
+          },
+          "valorInventario": {
+            "type": "number",
+            "description": "stockActual x precioUnitario"
+          },
+          "proveedorId": {
+            "type": "integer",
+            "nullable": true
+          },
+          "proveedorNombre": {
+            "type": "string",
+            "nullable": true
+          },
+          "activo": {
+            "type": "boolean"
+          },
+          "fechaRegistro": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ProductoEntrada": {
+        "type": "object",
+        "required": [
+          "nombre",
+          "categoria",
+          "unidadMedida",
+          "stockMinimo",
+          "precioUnitario"
+        ],
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 80
+          },
+          "categoria": {
+            "type": "string",
+            "description": "Nombre de una categoría existente"
+          },
+          "unidadMedida": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "stockMinimo": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "precioUnitario": {
+            "type": "number",
+            "minimum": 0,
+            "multipleOf": 0.01
+          },
+          "proveedorId": {
+            "type": "integer",
+            "nullable": true
+          },
+          "stockInicial": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000,
+            "description": "Opcional; genera una ENTRADA 'Inventario inicial'"
+          }
+        }
+      },
+      "ProductoActualizacion": {
+        "type": "object",
+        "required": [
+          "nombre",
+          "categoria",
+          "unidadMedida",
+          "stockMinimo",
+          "precioUnitario"
+        ],
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 80
+          },
+          "categoria": {
+            "type": "string"
+          },
+          "unidadMedida": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "stockMinimo": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "precioUnitario": {
+            "type": "number",
+            "minimum": 0
+          },
+          "proveedorId": {
+            "type": "integer",
+            "nullable": true
+          }
+        }
+      },
+      "Movimiento": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "productoId": {
+            "type": "integer"
+          },
+          "productoNombre": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "ENTRADA",
+              "SALIDA",
+              "AJUSTE"
+            ]
+          },
+          "cantidad": {
+            "type": "integer"
+          },
+          "stockAnterior": {
+            "type": "integer"
+          },
+          "stockResultante": {
+            "type": "integer"
+          },
+          "diferencia": {
+            "type": "integer"
+          },
+          "motivo": {
+            "type": "string",
+            "nullable": true
+          },
+          "usuarioId": {
+            "type": "integer"
+          },
+          "usuarioNombre": {
+            "type": "string"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MovimientoEntrada": {
+        "type": "object",
+        "required": [
+          "productoId",
+          "tipo",
+          "cantidad"
+        ],
+        "properties": {
+          "productoId": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "ENTRADA",
+              "SALIDA",
+              "AJUSTE"
+            ]
+          },
+          "cantidad": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "motivo": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 200,
+            "description": "Obligatorio en AJUSTE"
+          }
+        }
+      },
+      "ResultadoMovimiento": {
+        "type": "object",
+        "properties": {
+          "movimiento": {
+            "$ref": "#/components/schemas/Movimiento"
+          },
+          "producto": {
+            "$ref": "#/components/schemas/Producto"
+          },
+          "alerta": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "Alerta": {
+        "type": "object",
+        "properties": {
+          "productoId": {
+            "type": "integer"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "categoria": {
+            "type": "string"
+          },
+          "estadoStock": {
+            "type": "string"
+          },
+          "stockActual": {
+            "type": "integer"
+          },
+          "stockMinimo": {
+            "type": "integer"
+          },
+          "cantidadSugeridaPedido": {
+            "type": "integer"
+          },
+          "unidadMedida": {
+            "type": "string"
+          },
+          "proveedorId": {
+            "type": "integer",
+            "nullable": true
+          },
+          "proveedorNombre": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "Resumen": {
+        "type": "object",
+        "properties": {
+          "fechaCorte": {
+            "type": "string"
+          },
+          "totalProductosActivos": {
+            "type": "integer"
+          },
+          "totalUnidadesEnStock": {
+            "type": "integer"
+          },
+          "valorTotalInventario": {
+            "type": "number"
+          },
+          "productosAgotados": {
+            "type": "integer"
+          },
+          "productosStockBajo": {
+            "type": "integer"
+          },
+          "productosPorCategoria": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer"
+            }
+          },
+          "movimientosHoy": {
+            "type": "integer"
+          },
+          "unidadesEntradasHoy": {
+            "type": "integer"
+          },
+          "unidadesSalidasHoy": {
+            "type": "integer"
+          },
+          "ultimosMovimientos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Movimiento"
+            }
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "estado": {
+                "type": "integer"
+              },
+              "codigo": {
+                "type": "string",
+                "example": "VALIDACION_FALLIDA"
+              },
+              "mensaje": {
+                "type": "string"
+              },
+              "detalles": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "campo": {
+                      "type": "string"
+                    },
+                    "mensaje": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "ruta": {
+                "type": "string"
+              },
+              "fecha": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

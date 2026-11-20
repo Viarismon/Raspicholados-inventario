@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Raspicholados | Sistema de Inventario</title>
+  <meta name="description" content="Módulo de control de inventario para la heladería Raspicholados" />
+
+  <!-- Tipografías: Fraunces para titulares (carácter, calidez), Inter para interfaz -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- ============================================================
+       ESTRUCTURA GENERAL: barra lateral de navegación + contenido
+       El sistema es una SPA (Single Page Application): un solo HTML,
+       varias "vistas" que se muestran u ocultan con JavaScript.
+       ============================================================ -->
+
+  <div class="app-shell">
+
+    <!-- ---------- BARRA LATERAL ---------- -->
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark">🍧</span>
+        <div class="brand-text">
+          <strong>Raspicholados</strong>
+          <small>Control de inventario</small>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="Navegación principal">
+        <button class="nav-item is-active" data-view="dashboard">
+          <span class="nav-icon">◆</span> Panel general
+        </button>
+        <button class="nav-item" data-view="inventario">
+          <span class="nav-icon">▤</span> Inventario
+        </button>
+        <button class="nav-item" data-view="movimientos">
+          <span class="nav-icon">⇄</span> Movimientos
+        </button>
+        <button class="nav-item" data-view="reportes">
+          <span class="nav-icon">▦</span> Reportes
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <p>Proyecto formativo GA7-220501096</p>
+        <p>Evidencia AA4-EV03 · Front-end</p>
+      </div>
+    </aside>
+
+    <!-- ---------- CONTENIDO PRINCIPAL ---------- -->
+    <main class="content">
+
+      <!-- ===================== VISTA: DASHBOARD ===================== -->
+      <section id="view-dashboard" class="view is-active">
+        <header class="view-header">
+          <div>
+            <h1>Panel general</h1>
+            <p class="subtitle">Estado actual del inventario de Raspicholados</p>
+          </div>
+          <button class="btn btn-primary" id="btn-nuevo-producto-dash">+ Nuevo producto</button>
+        </header>
+
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <span class="kpi-label">Productos activos</span>
+            <span class="kpi-value" id="kpi-total-productos">0</span>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-label">Unidades en stock</span>
+            <span class="kpi-value" id="kpi-total-unidades">0</span>
+          </div>
+          <div class="kpi-card kpi-warning">
+            <span class="kpi-label">Stock bajo mínimo</span>
+            <span class="kpi-value" id="kpi-stock-bajo">0</span>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-label">Valor del inventario</span>
+            <span class="kpi-value" id="kpi-valor-inventario">$0</span>
+          </div>
+        </div>
+
+        <div class="dash-grid">
+          <div class="panel">
+            <h2>Existencias por categoría</h2>
+            <div id="chart-categorias" class="bar-chart"><!-- se llena por JS --></div>
+          </div>
+
+          <div class="panel">
+            <h2>Alertas de reabastecimiento</h2>
+            <ul id="lista-alertas" class="alert-list"><!-- se llena por JS --></ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== VISTA: INVENTARIO ===================== -->
+      <section id="view-inventario" class="view">
+        <header class="view-header">
+          <div>
+            <h1>Inventario</h1>
+            <p class="subtitle">Consulta, agrega, edita o elimina productos</p>
+          </div>
+          <button class="btn btn-primary" id="btn-nuevo-producto">+ Nuevo producto</button>
+        </header>
+
+        <div class="toolbar">
+          <input type="search" id="buscador" placeholder="Buscar producto por nombre..." aria-label="Buscar producto" />
+
+          <select id="filtro-categoria" aria-label="Filtrar por categoría">
+            <option value="todas">Todas las categorías</option>
+            <option value="Raspados">Raspados</option>
+            <option value="Helados">Helados</option>
+            <option value="Toppings">Toppings</option>
+            <option value="Insumos">Insumos</option>
+          </select>
+
+          <select id="filtro-estado" aria-label="Filtrar por estado de stock">
+            <option value="todos">Todos los estados</option>
+            <option value="ok">Stock normal</option>
+            <option value="bajo">Stock bajo</option>
+          </select>
+        </div>
+
+        <div class="table-wrap">
+          <table class="tabla" id="tabla-inventario">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Categoría</th>
+                <th>Unidad</th>
+                <th>Stock actual</th>
+                <th>Stock mínimo</th>
+                <th>Precio unitario</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-inventario"><!-- se llena por JS --></tbody>
+          </table>
+          <p id="tabla-vacia" class="tabla-vacia" hidden>No hay productos que coincidan con la búsqueda.</p>
+        </div>
+      </section>
+
+      <!-- ===================== VISTA: MOVIMIENTOS ===================== -->
+      <section id="view-movimientos" class="view">
+        <header class="view-header">
+          <div>
+            <h1>Movimientos de inventario</h1>
+            <p class="subtitle">Registra entradas y salidas de stock</p>
+          </div>
+        </header>
+
+        <form id="form-movimiento" class="form-movimiento panel">
+          <div class="field">
+            <label for="mov-producto">Producto</label>
+            <select id="mov-producto" required></select>
+          </div>
+          <div class="field">
+            <label for="mov-tipo">Tipo de movimiento</label>
+            <select id="mov-tipo" required>
+              <option value="entrada">Entrada (compra / reposición)</option>
+              <option value="salida">Salida (venta / consumo)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="mov-cantidad">Cantidad</label>
+            <input type="number" id="mov-cantidad" min="1" step="1" required />
+          </div>
+          <div class="field">
+            <label for="mov-motivo">Motivo / observación</label>
+            <input type="text" id="mov-motivo" placeholder="Ej: Compra a proveedor, venta del día..." />
+          </div>
+          <button type="submit" class="btn btn-primary">Registrar movimiento</button>
+        </form>
+
+        <div class="table-wrap">
+          <h2>Historial reciente</h2>
+          <table class="tabla">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Producto</th>
+                <th>Tipo</th>
+                <th>Cantidad</th>
+                <th>Motivo</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-movimientos"><!-- se llena por JS --></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===================== VISTA: REPORTES ===================== -->
+      <section id="view-reportes" class="view">
+        <header class="view-header">
+          <div>
+            <h1>Reportes</h1>
+            <p class="subtitle">Exporta el estado actual del inventario</p>
+          </div>
+        </header>
+
+        <div class="panel">
+          <p>Descarga el inventario completo en formato CSV para análisis externo o para anexar a informes.</p>
+          <button class="btn btn-secondary" id="btn-exportar-csv">Descargar inventario (.csv)</button>
+        </div>
+
+        <div class="panel">
+          <h2>Resumen ejecutivo</h2>
+          <p id="resumen-texto">Cargando resumen...</p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ===================== MODAL: CREAR / EDITAR PRODUCTO ===================== -->
+  <div class="modal-overlay" id="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+      <div class="modal-header">
+        <h2 id="modal-titulo">Nuevo producto</h2>
+        <button class="modal-close" id="btn-cerrar-modal" aria-label="Cerrar">×</button>
+      </div>
+
+      <form id="form-producto" class="form-producto">
+        <input type="hidden" id="prod-id" />
+
+        <div class="field">
+          <label for="prod-nombre">Nombre del producto</label>
+          <input type="text" id="prod-nombre" required placeholder="Ej: Raspado de mora" />
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="prod-categoria">Categoría</label>
+            <select id="prod-categoria" required>
+              <option value="Raspados">Raspados</option>
+              <option value="Helados">Helados</option>
+              <option value="Toppings">Toppings</option>
+              <option value="Insumos">Insumos</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="prod-unidad">Unidad de medida</label>
+            <input type="text" id="prod-unidad" required placeholder="Ej: unidad, kg, litro" />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="prod-stock">Stock actual</label>
+            <input type="number" id="prod-stock" min="0" step="1" required />
+          </div>
+          <div class="field">
+            <label for="prod-stock-min">Stock mínimo</label>
+            <input type="number" id="prod-stock-min" min="0" step="1" required />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="prod-precio">Precio unitario (COP)</label>
+            <input type="number" id="prod-precio" min="0" step="100" required />
+          </div>
+          <div class="field">
+            <label for="prod-proveedor">Proveedor</label>
+            <input type="text" id="prod-proveedor" placeholder="Opcional" />
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="btn-eliminar-producto" hidden>Eliminar producto</button>
+          <div class="modal-actions-right">
+            <button type="button" class="btn btn-ghost" id="btn-cancelar-modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Guardar</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Notificaciones tipo "toast" -->
+  <div id="toast" class="toast" hidden></div>
+
+  <!-- Scripts: se cargan al final para no bloquear el renderizado -->
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

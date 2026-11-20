@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raspicholados · Entrega de módulos integrados (GA8-AA1-EV02)</title>
+<link rel="icon" href="data:,">
+<style>
+  :root { --vino:#5a1736; --naranja:#f2a33a; --crema:#fbf3ee; --tinta:#2a1720; --gris:#6b5a62; --borde:#eadbd3; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; color:var(--tinta); background:var(--crema); }
+  header { background:var(--vino); color:#fff; padding:40px 24px 32px; }
+  .contenedor { max-width:1040px; margin:0 auto; }
+  header p { margin:4px 0; color:#f3dbe4; }
+  header h1 { margin:8px 0 6px; font:700 2rem/1.2 Georgia,"Times New Roman",serif; }
+  .etiqueta { display:inline-block; background:var(--naranja); color:var(--tinta); font-weight:700; font-size:.8rem; padding:3px 10px; border-radius:99px; }
+  main { padding:28px 24px 48px; }
+  h2 { font:700 1.35rem Georgia,"Times New Roman",serif; margin:32px 0 12px; }
+  .rejilla { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; }
+  .tarjeta { background:#fff; border:1px solid var(--borde); border-radius:14px; padding:18px 20px; }
+  .tarjeta h3 { margin:0 0 6px; font-size:1.05rem; }
+  .tarjeta p { margin:0 0 12px; color:var(--gris); font-size:.95rem; }
+  .boton { display:inline-block; background:var(--vino); color:#fff; text-decoration:none; padding:8px 14px; border-radius:8px; font-weight:600; font-size:.92rem; }
+  .boton.sec { background:#fff; color:var(--vino); border:1px solid var(--vino); }
+  table { width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--borde); border-radius:12px; overflow:hidden; font-size:.93rem; }
+  th, td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--borde); vertical-align:top; }
+  th { background:#f6e9e2; }
+  code { background:#f6e9e2; padding:1px 5px; border-radius:4px; font-size:.88em; }
+  .nota { font-size:.9rem; color:var(--gris); }
+  footer { text-align:center; color:var(--gris); font-size:.85rem; padding:24px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="contenedor">
+    <span class="etiqueta">GA8-220501096-AA1-EV02 · Módulos integrados</span>
+    <h1>Raspicholados · Sistema de inventario v1.1.0</h1>
+    <p>Tecnología en Análisis y Desarrollo de Software · SENA</p>
+    <p>Aprendiz: Viviana Arias Montilla · Instructor: William Fernando Muñoz</p>
+  </div>
+</header>
+<main class="contenedor">
+
+  <h2>Módulos publicados en esta página</h2>
+  <div class="rejilla">
+    <div class="tarjeta">
+      <h3>Prototipo front-end (AA4-EV03)</h3>
+      <p>Interfaz HTML, CSS y JavaScript que funciona sola en el navegador. Guarda los datos en <code>localStorage</code>, así que no necesita servidor.</p>
+      <a class="boton" href="prototipo/">Abrir el prototipo</a>
+    </div>
+    <div class="tarjeta">
+      <h3>Contrato de la API REST (OpenAPI 3.0.3)</h3>
+      <p>Los 28 servicios con sus datos de entrada, de salida y códigos de error, en Swagger UI.</p>
+      <a class="boton" href="api/">Ver la documentación</a>
+    </div>
+    <div class="tarjeta">
+      <h3>Resultados de las pruebas</h3>
+      <p>Postman/Newman: 71 peticiones y 205 aserciones sin fallos. JUnit 4: 65 pruebas unitarias en verde.</p>
+      <a class="boton" href="pruebas/reporte_newman.html">Reporte Newman</a>
+      <a class="boton sec" href="pruebas/pruebas_unitarias_junit.txt">Salida JUnit</a>
+    </div>
+    <div class="tarjeta">
+      <h3>Paquete ejecutable</h3>
+      <p>JAR compilado para Java 8 o superior, más la interfaz web, el script SQL y la configuración. Sin MySQL arranca en modo memoria.</p>
+      <a class="boton" href="descargas/raspicholados-inventario-v1.1.0.zip">Descargar ZIP</a>
+    </div>
+  </div>
+
+  <h2>Código fuente y versiones</h2>
+  <table>
+    <tr><th>Recurso</th><th>URL</th></tr>
+    <tr><td>Repositorio Git</td><td><a href="https://github.com/Viarismon/Raspicholados-inventario">github.com/Viarismon/Raspicholados-inventario</a></td></tr>
+    <tr><td>Versión integrada (etiqueta)</td><td><a href="https://github.com/Viarismon/Raspicholados-inventario/tree/v1.1.0-ga8">v1.1.0-ga8</a></td></tr>
+    <tr><td>Módulo integrado</td><td><a href="https://github.com/Viarismon/Raspicholados-inventario/tree/main/modulo-servicios-web-inventario">modulo-servicios-web-inventario</a></td></tr>
+    <tr><td>Manual técnico</td><td><a href="https://github.com/Viarismon/Raspicholados-inventario/blob/main/modulo-servicios-web-inventario/docs/MANUAL_TECNICO.md">docs/MANUAL_TECNICO.md</a></td></tr>
+  </table>
+
+  <h2>URL de la aplicación integrada (ambiente local)</h2>
+  <p class="nota">La aplicación web y la API se ejecutan en un servidor Java con MySQL que corre en el equipo de desarrollo; por eso estas direcciones solo responden cuando se ejecuta <code>run.bat</code> o <code>iniciar.bat</code>.</p>
+  <table>
+    <tr><th>Componente</th><th>URL</th></tr>
+    <tr><td>Aplicación web integrada</td><td><code>http://localhost:8080/</code></td></tr>
+    <tr><td>URL base de la API REST</td><td><code>http://localhost:8080/api</code></td></tr>
+    <tr><td>Estado del servicio</td><td><code>http://localhost:8080/api/salud</code></td></tr>
+    <tr><td>Contrato OpenAPI en vivo</td><td><code>http://localhost:8080/api/docs</code></td></tr>
+    <tr><td>Base de datos MySQL</td><td><code>jdbc:mysql://localhost:3306/raspicholados_db</code></td></tr>
+  </table>
+</main>
+<footer>Sistema de Inventario para Heladería RASPICHOLADOS · Colombia, noviembre de 2026</footer>
+</body>
+</html>
