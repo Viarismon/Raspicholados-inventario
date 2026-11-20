@@ -1,0 +1,31 @@
+==============================================================
+ RASPICHOLADOS - Sistema de inventario v1.1.0 (paquete ejecutable)
+ GA8-220501096-AA1-EV02 - Modulos integrados
+==============================================================
+
+Requisitos: Java 8 o superior (java -version).
+MySQL 5.7/8 es opcional: si no esta disponible, la aplicacion
+trabaja EN MEMORIA con datos de ejemplo (no guarda los cambios).
+
+1. Prueba rapida sin base de datos
+   Windows: doble clic en iniciar.bat
+   Linux/macOS/Git Bash: ./iniciar.sh
+   Abra http://localhost:8080/  usuario: admin  clave: Raspi2026*
+
+2. Con MySQL
+   a) Ejecute sql/raspicholados_api_v2.sql en MySQL Workbench.
+   b) Copie mysql-connector-j-x.x.x.jar en la carpeta lib/
+   c) Copie config.local.ejemplo.properties como config.local.properties
+      y escriba la contrasena de MySQL.
+   d) Ejecute iniciar.bat. La consola debe mostrar
+      "[BD] Conexion con MySQL verificada".
+
+Contenido
+   raspicholados-inventario.jar  aplicacion compilada (Java 8)
+   web/                          interfaz web (HTML, CSS, JS)
+   docs/openapi.json             contrato de los 28 servicios
+   sql/                          script de la base de datos
+   config.properties             configuracion por defecto
+   lib/                          aqui va el driver JDBC de MySQL
+
+Codigo fuente: https://github.com/Viarismon/Raspicholados-inventario

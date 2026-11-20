@@ -4,6 +4,11 @@
 > [`modulo-servicios-web-inventario`](modulo-servicios-web-inventario/README.md): interfaz web
 > (`web/`) + API REST (`src/`) + MySQL, con inicio de sesión JWT, roles y 65 pruebas unitarias
 > JUnit (`test/`). Ejecutar con `build.bat` y `run.bat`, y abrir `http://localhost:8080/`.
+>
+> **Entrega GA8-220501096-AA1-EV02 (módulos integrados):** sitio publicado en
+> https://viarismon.github.io/Raspicholados-inventario/ (prototipo, contrato de la API,
+> reportes de prueba y paquete ejecutable) y
+> [manual técnico](modulo-servicios-web-inventario/docs/MANUAL_TECNICO.md).
 
 | Carpeta | Evidencia |
 |---|---|

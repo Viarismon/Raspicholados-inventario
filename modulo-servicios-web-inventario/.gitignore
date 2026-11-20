@@ -22,3 +22,4 @@ dist/
 fuentes-test.txt
 # Las librerías de prueba (lib/test/*.jar) SÍ se versionan para que las
 # pruebas se puedan ejecutar sin descargar nada.
+bin-dist/

@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "API de inventario Raspicholados",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Servicios web REST del sistema de inventario de la heladería Raspicholados. Evidencia GA7-220501096-AA5-EV03 (SENA, Tecnología en Análisis y Desarrollo de Software). Autora: Viviana Arias Montilla.\n\nTodas las respuestas son JSON en UTF-8. Las respuestas exitosas usan { \"datos\": ... } y los errores { \"error\": { estado, codigo, mensaje, detalles } }.",
     "contact": {
       "name": "Viviana Arias Montilla"

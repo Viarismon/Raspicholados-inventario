@@ -4,8 +4,23 @@
 - GA7-220501096-AA5-EV03 — Diseño y desarrollo de servicios web (API REST, v1.0.0)
 - GA8-220501096-AA1-EV01 — Desarrollar software a partir de la integración de sus módulos (v1.1.0)
 
+- GA8-220501096-AA1-EV02 — Módulos integrados (entrega: URL, ejecutables, manual técnico)
+
 **Aprendiz:** Viviana Arias Montilla · Tecnología en Análisis y Desarrollo de Software (SENA)
 **Versión:** 1.1.0
+
+## Entrega de módulos integrados (GA8-220501096-AA1-EV02)
+
+| Producto | Dónde |
+|---|---|
+| Sitio de la entrega (GitHub Pages) | https://viarismon.github.io/Raspicholados-inventario/ |
+| Prototipo front-end publicado | https://viarismon.github.io/Raspicholados-inventario/prototipo/ |
+| Contrato de la API (Swagger UI) | https://viarismon.github.io/Raspicholados-inventario/api/ |
+| Reportes de prueba | https://viarismon.github.io/Raspicholados-inventario/pruebas/reporte_newman.html |
+| Paquete ejecutable | https://viarismon.github.io/Raspicholados-inventario/descargas/raspicholados-inventario-v1.1.0.zip (o `empaquetar.bat`) |
+| Aplicación integrada (local) | `http://localhost:8080/` · API `http://localhost:8080/api` |
+| Manual técnico | [`docs/MANUAL_TECNICO.md`](docs/MANUAL_TECNICO.md) |
+| Acta de requerimientos | [`docs/ACTA_APROBACION_REQUERIMIENTOS.md`](docs/ACTA_APROBACION_REQUERIMIENTOS.md) |
 
 ## Novedades de la versión 1.1.0 (GA8-220501096-AA1-EV01)
 
